@@ -1,0 +1,1 @@
+start x-emu-v06x\v06x --window --nosound --rom hwyenc.rom
