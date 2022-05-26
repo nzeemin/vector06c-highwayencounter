@@ -43,7 +43,7 @@ DrawSpriteW:	pop	b
 ;------------------------------------------------------------------------------
 ; Отображение спрайта с маской 3x24 для титульной надписи в меню.
 ; Sprite sa kresli do vnutornej obrazovky po riadkoch od spodu hore.
-; I: DE=adresa dat spritu, HL=adresa VO; TODO: A=тип процедуры 0..3
+; I: DE=adresa dat spritu, HL=adresa VO; A=тип процедуры 0..3
 ; O: -
 ; M: все
 DrawSpriteM:	
@@ -569,22 +569,22 @@ DrawSprB:	mov	d,a		; тип процедуры временно в D
 DrawSprR:	; тип процедуры 0
 		mov	l,c
 		mov	h,b
-		call	DrawSprite6	; рисование спрайта
+		call	DrawSprite4	; рисование спрайта
 		jmp	DrawSprC	; идём дальше
 		; тип процедуры 1
 		mov	l,c
 		mov	h,b
-		call	DrawSprite4	; рисование спрайта
+		call	DrawSprite0	; рисование спрайта
 		jmp	DrawSprC	; идём дальше
 		; тип процедуры 2
 		mov	l,c
 		mov	h,b
-		call	DrawSprite0	; рисование спрайта
+		call	DrawSprite2	; рисование спрайта
 		jmp	DrawSprC	; идём дальше
 		; тип процедуры 3
 		mov	l,c
 		mov	h,b
-		call	DrawSprite2
+		call	DrawSprite6
 ;
 DrawSprC:	pop	h		; obnov cielovu adresu vo VO2
 		mvi	a,2		; znacka
@@ -706,25 +706,25 @@ DrawRoughB:	; typ rutiny 0
 		mov	l,c
 		mov	h,b
 		mvi	c,7		; vyska 7 bodov
-M256R2B:	call	DrawSprite2L	; vykreslenie spritu narotovaneho o 2 body dolava
+M256R2B:	call	DrawSprite6L	; vykreslenie spritu narotovaneho o 2 body dolava
 		jmp	DrawRoughC	; skoc dalej
 		; typ rutiny 1
 		mov	l,c
 		mov	h,b
 		mvi	c,7		; vyska 7 bodov
-M256R0B:	call	DrawSprite0L	; vykreslenie spritu bez posunutia
+M256R0B:	call	DrawSprite4L	; vykreslenie spritu bez posunutia
 		jmp	DrawRoughC	; skoc dalej
 		; typ rutiny 2
 		mov	l,c
 		mov	h,b
 		mvi	c,7		; vyska 7 bodov
-M256R4B:	call	DrawSprite4L	; vykreslenie spritu narotovaneho o 2 body doprava
+M256R4B:	call	DrawSprite0L	; vykreslenie spritu narotovaneho o 2 body doprava
 		jmp	DrawRoughC	; skoc dalej
 		; typ rutiny 3
 		mov	l,c
 		mov	h,b
 		mvi	c,7		; vyska 7 bodov
-		call	DrawSprite6L
+		call	DrawSprite2L
 
 DrawRoughC:	pop	h		; adresu struktury spritu
 DrawRoughD:	lxi	d,16
@@ -1138,7 +1138,7 @@ InitSprF:	dcx	d		; (1)
 		dad	h		; *16
 		dad	h		; *32
 		xchg			; DE = ((X + Y) / 2) * 32
-		lxi	h,InnerScr2+1302h ;TODO =0BFFCh
+		lxi	h,InnerScr2+13A3h ;TODO было =0BFFCh
 		call	SubHLDE		; HL = 0BFFCh - (((X + Y) / 2) * 32)
 		pop	d		; obnov Y do DE
 		xthl			; medzivysedok na zasobnik, HL=X
@@ -1204,7 +1204,7 @@ PrepSprZ:	lhld	VortonStruct	; adresa struktury aktualneho hlavneho
 		dcx	h
 		mvi	c,0B0h		; nastav ju na 0B0h
 		mov	m,c
-PrepSprB:	mvi	a,1		; cislo zony 1 (az 36)
+PrepSprB:	mvi	a,1		; номер зоны 1 (до 36)
 		lxi	d,07F0h		; offset adresy VO2 pre sprity
 		lxi	h,00B0h		; pociatocna pozicia v zone
 PrepSprC:	push	psw		; odpamataj pocitadlo

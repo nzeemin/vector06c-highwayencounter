@@ -157,7 +157,7 @@ DecTime:	lhld	TimeDelay	; zdrzanie na jeden dielik casu
 		lda	TimePos		; znakovy stlpec dielika casu
 		rar			; vydel /2 - CY=1 pre dvojdielik
 		mov	e,a		; do E
-		mvi	d,22		; riadok pre TIME
+		mvi	d,26		; riadok pre TIME
 		jc	DecTimeB	; pre dvojdielik, skoc dalej
 		xra	a		; medzera
 		call	Print88		; zmaz jednodielik
@@ -774,7 +774,7 @@ IncSpeedB:	dad	d		; dalsi sprite
 		jmp	PlayAgain	; skoc na zaciatok hry
 
 ;------------------------------------------------------------------------------
-; Spracovanie posunu Vortna, Striel podla stlaceny klavesov.
+; Обработка смещения Vorton, выстрел по нажатию клавиш
 ProcMove:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
 		mvi	a,8		; posun sa na Rychlost
 		add	l
@@ -786,7 +786,7 @@ ProcMove:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
 		lda	KbdState	; - FLRUD
 		mov	b,a		; stav Kbd do B
 
-		; zrychlenie/spomalenie Vortona
+		; ускорение / замедление Vorton
 		lxi	h,ChngSpdDly	; premenna pre zdrzanie pred zmenou rychlosti
 		dcr	m		; zniz pocitadlo
 		jp	ProcMoveC	; ak nie je nulove, skoc dalej
@@ -794,7 +794,7 @@ ProcMove:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
 		mov	a,b
 		rrc			; spomalenie?
 		jnc	ProcMoveA	; nie, skoc dalej
-		ldax	d		; (8) - rychlost
+		ldax	d		; (8) - скорость
 		dcr	a		; zniz rychlost
 		jm	ProcMoveC	; ak uz bola rychlost nulova, skoc dalej
 		stax	d		; (8) - uloz novu rychlost
@@ -803,7 +803,7 @@ ProcMove:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
 ProcMoveA:	mov	a,b		; zrychlenie?
 		ani	2
 		jz	ProcMoveC	; nie, skoc dalej
-		ldax	d		; (8) - rychlost
+		ldax	d		; (8) - скорость
 		inr	a		; zvys rychlost
 		cpi	3		; ak je uz maximalna rychlost (2 !!),
 		jnc	ProcMoveC	; skoc dalej
@@ -812,23 +812,23 @@ ProcMoveB:	dcr	a		; je rychlost 1 ?
 		jnz	ProcMoveC	; nie, skoc dalej
 		mvi	m,7		; ano, inic. zdrzanie pre dalsiu zmenu rychlosti
 
-		; otocenie Vortona
-ProcMoveC:	dcr	e		; (7) - otocenie
+		; вращение Vorton
+ProcMoveC:	dcr	e		; (7) - вращение
 		inx	h		; posun sa na premennu pre zdrzanie pred zmenou otocenia
 		dcr	m		; zniz pocitadlo
 		jp	ProcMoveE	; ak nie je nulove, skoc dalej
 		mvi	m,1		; inak inic. zdrzanie pre dalsiu zmenu otocenia
 		mov	a,b
-		ani	4		; otocenie vpravo?
+		ani	4		; вращение вправо?
 		jz	ProcMoveD	; nie, skoc dalej
-		ldax	d		; (7) - otocenie
+		ldax	d		; (7) - вращение
 		inr	a		; zvys hodnotu otocenia
 		ani	7		; a uprav na interval <0, 7>
 		stax	d		; (7) - uloz novu hodnotu
-ProcMoveD:	mov	a,b		; otocenie vlavo?
+ProcMoveD:	mov	a,b		; вращение влево?
 		ani	8
 		jz	ProcMoveE	; nie, skoc dalej
-		ldax	d		; (7) - otocenie
+		ldax	d		; (7) - вращение
 		dcr	a		; zniz hodnotu otocenia
 		ani	7		; a uprav na interval <0, 7>
 		stax	d		; (7) uloz novu hodnotu
@@ -853,7 +853,7 @@ ProcMoveG:	dcr	a		; zniz pocitadlo casu Strely
 		cpi	((SprStructS3+16)&255) ; opakuj pre vsetky 3 Strely
 		jnz	ProcMoveF
 
-		; osetrenie vystrelu
+		; выстрел
 		xchg
 		inx	h		; posun sa na premennu - zdrzanie pred dalsim vystrelom
 		dcr	m		; zniz pocitadlo
@@ -905,7 +905,7 @@ ShotTime:	mvi	m,22		; inicializuj cas letu pre tuto Strelu
 		mov	e,a		; stlpec pre POWER
 		dcr	a		; zniz aktualny stlpec
 		sta	PowerIndik	; uloz novu hodnotu
-		mvi	d,20		; riadok pre POWER
+		mvi	d,24		; ряд для POWER
 		xra	a
 		call	Print88		; zmaz posledny znak POWER
 		mov	a,e		; kod znaku pre konkretny znak POWER
@@ -919,7 +919,7 @@ ShotTime:	mvi	m,22		; inicializuj cas letu pre tuto Strelu
 		ora	m
 		mov	m,a
 
-; Обработка изменений последовательности спрайтов.
+; Обработка изменений последовательности спрайтов
 		; premenna Seq0E
 ProcSeq:	lxi	d,Seq0E		; adresa premennej Seq0E do DE
 		lhld	VortonStruct	; adresa struktury aktualneho Vortona
@@ -1008,7 +1008,7 @@ ProcSeqI:	mov	m,a		; a uloz
 		ret
 
 ;------------------------------------------------------------------------------
-; Обработка движения объектов и их столкновений.
+; Обработка движения объектов и их столкновений
 ProcSpr:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
 		mov	a,m		; Y suradnica
 		cpi	0FEh		; je Vorton aktivny?
@@ -1016,11 +1016,11 @@ ProcSpr:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
 		push	h		; odpamataj adresu struktury hl. spritu
 		mvi	a,8
 		add	l
-		mov	l,a		; (8) - rychlost
-		mov	a,m		; rychlost do A
+		mov	l,a		; (8) - скорость
+		mov	a,m		; скорость в A
 		ora	a		; vybuchuje prave Vorton?
 		jp	ProcSprA	; nie, pokracuj dalej
-		dcx	h		; (7) - smer/sekvencia/otocenie
+		dcx	h		; (7) - направление / последовательность / вращение
 		mvi	m,0		; vynuluj sekvenciu spritu
 		jmp	ProcSprE	; pokracuj dalej
 
@@ -1029,12 +1029,12 @@ ProcSprA:	mvi	a,-6
 		mov	l,a		; (2)
 		mov	b,m
 		dcx	h		; (1)
-		mov	c,m		; X pozicia Vortona do BC
+		mov	c,m		; X координата Vorton в BC
 		dcx	h		; (0)
-		mov	a,b		; zisti, ci je Vorton pred Zonou 30
+		mov	a,b		; узнать, находится ли Вортон перед Зоной 30
 		ana	a
-		jnz	ProcSprB	; nie je, skoc dalej
-		mov	a,c		; este nizsi byte
+		jnz	ProcSprB	; нет, переходим
+		mov	a,c		; это младший байт
 		cpi	0B0h
 		jc	ProcSprD	; je pred Zonou 30, preskoc test zmeny Zony
 
@@ -1054,7 +1054,7 @@ ProcSprC:	call	PrepSpr		; priprav sprity
 ProcSprD:	mvi	a,8
 		add	l
 		mov	l,a		; (8)
-		mov	a,m		; rychlost pohybu Vortona
+		mov	a,m		; скорость движения Vorton
 		ana	a		; je rychlost nulova?
 		jnz	ProcSprM	; nie, skoc spracovat pohyb
 		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
@@ -1064,7 +1064,7 @@ ProcSprL:	push	h		; odpamataj adresu struktury "hlavneho" spritu
 		mvi	a,8
 		add	l
 		mov	l,a		; (8)
-		mov	a,m		; rychlost pohybu spritu
+		mov	a,m		; скорость движения объекта
 		ani	0BFh		; vynuluj 6. bit - sprite v pohybe po odrazeni
 					; ak nie je sprite v pohybe,
 		jz	NextMSprP	;  skoc spracovat dalsi "hlavny" sprite
@@ -1075,12 +1075,12 @@ ProcSprE:	dcx	h		; (6)
 		dcx	h		; (5)
 		mov	a,m		; sekvencia spritu vybuch
 		adi	8		; posun sa na dalsiu sekvenciu vybuchu
-		cpi	0DCh		; koniec vybuchu?
+		cpi	0DCh		; конец взрыва?
 		jc	ProcSprF	; nie, skoc dalej
 		inx	h		; (6)
 		inx	h		; (7)
 		inx	h		; (8)
-		mov	a,m		; (8) - rychlost spritu
+		mov	a,m		; (8) - скорость объекта
 		ani	7Fh		; zrus flag vybuchu
 		mov	m,a		; a uloz
 		jmp	ShotOff		; skoc deaktivovat sprite, prejdi na dalsi
@@ -1104,7 +1104,7 @@ ProcSprH:	mov	a,l		; z adresy struktury aktualneho Vortona
 		ani	1Fh
 		adi	6
 		mov	e,a		; uloz do E
-		mvi	d,20		; riadok, kde je Vorton na panely
+		mvi	d,24		; riadok, kde je Vorton na panely
 		mvi	l,3		; vyska Vortona 3 znaky
 ProcSprI:	xra	a		; zmaz lavy znak
 		call	Print88
@@ -1204,19 +1204,19 @@ ProcSprNoColl:	pop	d		; obnov adresu struktury hlavneho spritu
 		mov	m,d
 		mvi	a,7		; posun sa na typ rutiny
 		add	l
-		mov	l,a		; (9) - typ rutiny
+		mov	l,a		; (9) - тип процедуры
 MovTablePtr:	lxi	d,0		; obnov ukazatel do tabulky
 		inx	d		; posun ukazatel na inkrement typu rutiny
 		ldax	d		; inkrement do A
 		inx	d		; posun ukazatel na inkrement VO2
 		add	m		; pripocitaj inkrement k aktualnej hodnote
 		jm	ProcSprNoCollA	; ak je sucasna hodnota <0, uprav ju na kladnu
-		cpi	3		; ak sme v rozsahu {0, 1, 2},
+		cpi	4		; ak sme v rozsahu {0, 1, 2},
 		jc	ProcSprNoCollC	; skoc novu hodnotu ulozit
-		sui	3		; ak je sucasna hodnota >2,
+		sui	4		; ak je sucasna hodnota >2,
 		jp	ProcSprNoCollB	;  uprav ju na povoleny rozsah
 
-ProcSprNoCollA:	adi	3		; uprav hodnotu na povoleny rozsah
+ProcSprNoCollA:	adi	4		; uprav hodnotu na povoleny rozsah
 ProcSprNoCollB:	inx	d		; pri opusteni znakovej pozicie, posun
 		inx	d		; ukazatel v tabulke na druhy inkrement
 ProcSprNoCollC:	mov	m,a		; (9) - uloz novu hodnotu

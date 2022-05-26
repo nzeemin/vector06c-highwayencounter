@@ -24,7 +24,7 @@
 
 Start	.equ	2E0h
 
-	.EXPORT KeyLineEx, KeyLine0, KeyLine1, KeyLine5, KeyLine6, KeyLine7
+	.EXPORT KeyLineEx, KeyLine0, KeyLine7
 	.EXPORT BorderColor, SetPaletteGame
 
 ;----------------------------------------------------------------------------
@@ -119,18 +119,18 @@ KEYINT:
 	out	3
 	in	2
 	sta	KeyLine0
-	mvi	a, 0FDh
-	out	3
-	in	2
-	sta	KeyLine1
-	mvi	a, 0DFh
-	out	3
-	in	2
-	sta	KeyLine5
-	mvi	a, 0BFh
-	out	3
-	in	2
-	sta	KeyLine6
+;	mvi	a, 0FDh
+;	out	3
+;	in	2
+;	sta	KeyLine1
+;	mvi	a, 0DFh
+;	out	3
+;	in	2
+;	sta	KeyLine5
+;	mvi	a, 0BFh
+;	out	3
+;	in	2
+;	sta	KeyLine6
 	mvi	a, 07Fh
 	out	3
 	in	2
@@ -152,9 +152,9 @@ KEYINT:
 
 KeyLineEx:	.db 11111111b
 KeyLine0:	.db 11111111b
-KeyLine1:	.db 11111111b
-KeyLine5:	.db 11111111b
-KeyLine6:	.db 11111111b
+;KeyLine1:	.db 11111111b
+;KeyLine5:	.db 11111111b
+;KeyLine6:	.db 11111111b
 KeyLine7:	.db 11111111b
 
 BorderColor:	.db 0		; border color number 0..15

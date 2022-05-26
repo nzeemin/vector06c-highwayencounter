@@ -32,8 +32,8 @@ UsePackedGrp	.equ	0
 Release		.equ	1
 DebugDemoLvl	.equ	-1	; -1 - Demo od zaciatku
 				; 30 az 0 - prva Zona po Intre + SubZony v Zone 0
-CheatNoTime	.equ	1
-CheatLife	.equ	1
+CheatNoTime	.equ	0
+CheatLife	.equ	0
 CheatZone0	.equ	0
 
 ;------------------------------------------------------------------------------
@@ -47,7 +47,7 @@ InnerScr2	.equ	0C000h-(SVO*VVO)-(14*SVO+8) ; VO2 (0A56Eh)
 InnerScr	.equ	InnerScr2-(SVO*VVO)-(SVO*8) ; VO1 (08BE6h)
 MarkBuff	.equ	InnerScr-(SVO*VVOZ)-(SVO+8) ; (088ADh)
 MarkBuffBeg	.equ	MarkBuff-(3*SVO+8) ; (08824h)
-Stack		.equ	2E0h ;MarkBuffBeg	; zasobnik pred vnutorne obrazovky
+Stack		.equ	100h ;MarkBuffBeg	; zasobnik pred vnutorne obrazovky
 
 ;------------------------------------------------------------------------------
 
@@ -65,7 +65,9 @@ Start:
 		ei
 ;TODO: Pause, then show sign "Press Any Key When Ready"
 ; Waiting on the title screen
-;		call	WaitAnyKey2
+;		lxi	h,TAnyKey
+;		call	Print85Text
+		call	WaitAnyKey2
 		di
 		call	ClearPlane012
 		call	SetPaletteGame
@@ -80,19 +82,14 @@ Start:
 ;		lxi	h,1E78h
 ;		call	Beep
 
-		call	DrawGridM
-		call	Cls		; zmaz obrazovku
-		mvi	l,155		; a vykresli vnutornu obrazovku
-		lxi	d,InnerScr+(3*SVO)
-		lxi	b,BaseVramAdr+(256-18)
-		call	DrawInnerScr
+;		call	DrawGridM
+;		call	Cls		; zmaz obrazovku
+;		mvi	l,155		; a vykresli vnutornu obrazovku
+;		lxi	d,InnerScr+(3*SVO)
+;		lxi	b,BaseVramAdr+(256-18)
+;		call	DrawInnerScr
 
-;		lxi	d,LabelHE+4	; data nadpisu (zobrazuje sa zprava)
-;		lxi	b,InnerScr+(11*SVO)+30	 ; adresa VO
-;		lxi	h,SprBrickX4	; adresa spritu SprBrickM
-;		call	DrawLblSpr	; zobraz riadok spritov
-
-		call	AnimateLabel	; zobraz animovany nadpis
+;		call	AnimateLabel	; zobraz animovany nadpis
 
 ;		lxi	d,LabelHE+4	; data nadpisu (zobrazuje sa zprava)
 ;		lxi	b,InnerScr+(11*SVO)+29 ; adresa VO
@@ -130,16 +127,16 @@ Start:
 ;		lxi	b,(32*256)+34
 ;		call	DrawSprite
 
-		lxi	h,TMenu
-		call	Print85Text
-		lxi	h,BaseVramAdr+HILO(1,255)	; vykrelenie loga Vortex
-		lxi	d,LogoVortex
-		lxi	b,HILO(8,56)
-		call	DrawSprite
+;		lxi	h,TMenu
+;		call	Print85Text
+;		lxi	h,BaseVramAdr+HILO(1,255)	; vykrelenie loga Vortex
+;		lxi	d,LogoVortex
+;		lxi	b,HILO(8,56)
+;		call	DrawSprite
 
 ;		call	ShowPanel
 ;		call	Intro
-;		call	StartGame
+		call	StartGame
 
 ;		mvi	a,11
 ;		sta	ZoneNumber
@@ -161,17 +158,19 @@ Start:
 ;		call	PrintZoneNum
 ;		call	PrtScore
 
-Infty:	jmp Infty
+
+Infty:	;jmp Infty
 	jmp Start
 
 ;------------------------------------------------------------------------------
 
 ; Returns: A=key code, $00 no key; Z=0 for key, Z=1 for no key
-; Key codes: Down=$01, Left=$02, Right=$03, Up=$04, Look/shoot=$05
-;            Inventory=$06, Escape=$07, Switch look/shoot=$08, Enter=$09, Menu=$0F
+; Key codes: PxxFLRUD Pause=$80, Fire=$10, Left=$08, Right=$04, Up=$02, Down=$01
 ReadKeyboard:
-		lxi	h,ReadKeyboard_map	; Point HL at the keyboard list
-		mvi	b,6		; number of rows to check
+		xra	a
+		sta	ReadKeyboard_3+1
+		lxi	h,ReadKeyboard_map  ; Point HL at the keyboard list
+		mvi	b,3		; number of rows to check
 ReadKeyboard_0:        
 		mov	e,m		; get address low
 		inx	h
@@ -181,33 +180,31 @@ ReadKeyboard_0:
 		mvi	c,8		; number of keys in a row
 ReadKeyboard_1:
 		ral			; shift A left; bit 0 sets carry bit
-		jnc	ReadKeyboard_2	; if the bit is 0, we've found our key
+		jc	ReadKeyboard_2	; if the bit is 1, the key's not pressed
+		mov	e,a		; save A
+		lda	ReadKeyboard_3+1
+		ora	m		; set bit for the key pressed
+		sta	ReadKeyboard_3+1
+		mov	a,e		; restore A
+ReadKeyboard_2:
 		inx	h		; next table address
 		dcr	c
 		jnz	ReadKeyboard_1	; continue the loop by bits
 		dcr	b
-		jz	ReadKeyboard_0	; continue the loop by lines
-		xra	a		; clear A, no key found
+		jnz	ReadKeyboard_0	; continue the loop by lines
+ReadKeyboard_3:
+		mvi	a,0		; set the result; mutable parameter!
+		ora	a		; set/reset Z flag
 		ret
-ReadKeyboard_2:
-		mov	a,m		; We've found a key, fetch the character code
-		ora	a
-		ret
-; Mapping: Arrows; US/Space - look/shoot, Tab/RusLat - switch look/shoot,
-;          AR2/ZB/PS - escape, I/M - inventory; P/R - menu, Enter=Enter
-ReadKeyboard_map:
+; Mapping: Left = Lt [,  Right = Rt ],  Up = Up SS,  Down = Dn R/L
+;          Fire = US Tab Spc PS ZB,  Pause = VK
+ReadKeyboard_map:					 ; 7   6   5   4   3   2   1   0
 		.DW	KeyLineEx
-		.DB	$08,$00,$05,$00,$00,$00,$00,$00  ; R/L SS  US
+		.DB	$01,$02,$10,$00,$00,$00,$00,$00  ; R/L SS  US
 		.DW	KeyLine0
-		.DB	$01,$03,$04,$02,$07,$09,$07,$08  ; Dn  Rt  Up  Lt  ZB  VK  PS  Tab
-		.DW	KeyLine1
-		.DB	$00,$00,$00,$00,$00,$07,$00,$00  ; F5  F4  F3  F2  F1  AR2 Str  ^\
-		.DW	KeyLine5
-		.DB	$00,$00,$06,$00,$00,$00,$06,$00  ;  O   N   M   L   K   J   I   H
-		.DW	KeyLine6
-		.DB	$00,$00,$00,$00,$00,$0F,$00,$0F  ;  W   V   U   T   S   R   Q   P
+		.DB	$01,$04,$02,$08,$10,$80,$10,$10  ; Dn  Rt  Up  Lt  ZB  VK  PS  Tab
 		.DW	KeyLine7
-		.DB	$05,$00,$00,$00,$00,$00,$00,$00  ; Spc  ^   ]   \   [   Z   Y   X
+		.DB	$10,$00,$08,$00,$04,$00,$00,$00  ; Spc  ^   ]   \   [   Z   Y   X
 
 ;------------------------------------------------------------------------------
 
@@ -231,10 +228,21 @@ WaitNoKey:
 #include "hwyencgame.asm"
 #include "hwyencutil.asm"
 
-TestKbdJoy:	ret
+TestKbdJoy:	call	ReadKeyboard
+		sta	KbdState
+		ret
+
 WaitAnyKeyT10:	ret
 
 #include "hwyencdata.asm"
+
+;------------------------------------------------------------------------------
+
+.echo "End of code is "
+.echo $
+.echo ", start of screen structs is "
+.echo MarkBuffBeg
+.echo "\n"
 
 
 ;------------------------------------------------------------------------------

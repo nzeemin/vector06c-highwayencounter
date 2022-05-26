@@ -98,8 +98,8 @@ Seq10:		.db	4		; premenna pre urcenie sekvencie spritu
 Seq11:		.db	0		; premenna pre urcenie sekvencie spritu
 Seq12:		.db	4		; premenna pre urcenie sekvencie spritu
 Seq13:		.db	0		; premenna pre urcenie sekvencie spritu
-KbdState:	.db	0		; stav stlacenych klavesov - xxxFLRUD
-SndType:	.db	0		; typ zvuku
+KbdState:	.db	0		; состояние нажатия клавиш - xxxFLRUD
+SndType:	.db	0		; тип звука
 LTronStep:	.db	0		; pocitadlo krokov Lasertronu
 VortonHead:	.db	6		; znakovy stlpec hlavy akt. Vortona na panely
 PowerIndik:	.db	22		; znakovy stlpec pre aktualny dielik POWER
@@ -150,6 +150,10 @@ BackupVars:	.db	1
 		.db	0
 
 BVarsLen	.equ	$-BackupVars
+
+	#if VarsLen != BVarsLen
+	  #error "Разная длина поля основных и резервных переменных!!!"
+	#endif
 
 ;------------------------------------------------------------------------------
 ; inicializacne data spritov
@@ -1067,7 +1071,11 @@ Font88:
 	.db	$00,$00,$00,$00,$00,$F0,$F8,$FC
 ; znaky pre POWER (21 - 24) a TIME - (25 a 26)
 		;binclude "../data/font-power-time.bin"
-;TODO
+	.db	$00,$FE,$FE,$FE,$FE,$FE,$00,$FE
+	.db	$00,$AA,$55,$AA,$54,$A0,$0E,$FE
+	.db	$00,$AA,$54,$A0,$0E,$FE,$FE,$FE
+	.db	$00,$A0,$0E,$FE,$FE,$FE,$FE,$FE
+	.db	$00,$EE,$EE,$EE,$EE,$EE,$EE,$EE		; Time bars
 ; znaky pre ARROW (27 a 28) a VORTON HEAD - (29 a 30)
 		;binclude "../data/font-arrow-vorton.bin"
 ;TODO

@@ -428,12 +428,12 @@ TInfo:		.db	8,4
 		.db	"T",0FFh
 		.db	23,18
 		.db	"G",0FFh
-		.db	3,23
-		.db	":PRESS=ANY=KEY=WHEN=READY:",0FFh
 		.db	6,0
 		.db	":HIGHWAY==ENCOUNTER:",0FFh
 		.db	4,1
-		.db	":CLASSIFIED=INFORMATION:",0FEh
+		.db	":CLASSIFIED=INFORMATION:",0FFh
+TAnyKey:	.db	3,23
+		.db	":PRESS=ANY=KEY=WHEN=READY:",0FEh
 
 TAborted:	.db	7,8
 		.db	":MISSION=ABORTED:",0FEh
