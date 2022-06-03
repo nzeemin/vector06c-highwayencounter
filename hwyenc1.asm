@@ -27,7 +27,6 @@
 
 ;------------------------------------------------------------------------------
 
-Mem256		.equ	1
 UsePackedGrp	.equ	0
 Release		.equ	1
 DebugDemoLvl	.equ	-1	; -1 - Demo od zaciatku
@@ -38,7 +37,6 @@ CheatZone0	.equ	0
 
 ;------------------------------------------------------------------------------
 BaseVramAdr	.equ	0E000h		; Базовый адрес для игрового экрана
-BaseVramAdr2	.equ	0C000h		; Базовый адрес для второго экрана
 SVO		.equ	32		; ширина строки теневого экрана, в столбцах/байтах
 SVO8		.equ	(SVO*8)
 VVO		.equ	144		; vyska VO v mikroriadkoch
@@ -51,22 +49,19 @@ Stack		.equ	100h ;MarkBuffBeg	; zasobnik pred vnutorne obrazovky
 
 ;------------------------------------------------------------------------------
 
-; Import declarations from hwyenc0.exp
+; Import declarations from hwyenc0.asm
 #include "hwyenc0.exp"
 
 ;------------------------------------------------------------------------------
 
-		.org 2E0h
-Start:
+		.org Start
+;Start:
 		di
-		lxi sp,Stack
+		lxi	sp,Stack
 ; Clear the plane 3 ($8000-$BFFF) from any dirt
 		;call ClearPlane3
 		ei
-;TODO: Pause, then show sign "Press Any Key When Ready"
 ; Waiting on the title screen
-;		lxi	h,TAnyKey
-;		call	Print85Text
 		call	WaitAnyKey2
 		di
 		call	ClearPlane012
@@ -75,21 +70,14 @@ Start:
 ;		call	Menu
 ;		call	ShowInfo
 
-;		lxi	h,4533h
-;		lxi	h,54A0h
-;		lxi	h,646Eh
-;		lxi	h,0C801h
-;		lxi	h,1E78h
-;		call	Beep
+		call	DrawGridM
+		call	Cls		; zmaz obrazovku
+		mvi	l,155		; a vykresli vnutornu obrazovku
+		lxi	d,InnerScr+(3*SVO)
+		lxi	b,BaseVramAdr+(256-18)
+		call	DrawInnerScr
 
-;		call	DrawGridM
-;		call	Cls		; zmaz obrazovku
-;		mvi	l,155		; a vykresli vnutornu obrazovku
-;		lxi	d,InnerScr+(3*SVO)
-;		lxi	b,BaseVramAdr+(256-18)
-;		call	DrawInnerScr
-
-;		call	AnimateLabel	; zobraz animovany nadpis
+		call	AnimateLabel	; zobraz animovany nadpis
 
 ;		lxi	d,LabelHE+4	; data nadpisu (zobrazuje sa zprava)
 ;		lxi	b,InnerScr+(11*SVO)+29 ; adresa VO
@@ -127,16 +115,9 @@ Start:
 ;		lxi	b,(32*256)+34
 ;		call	DrawSprite
 
-;		lxi	h,TMenu
-;		call	Print85Text
-;		lxi	h,BaseVramAdr+HILO(1,255)	; vykrelenie loga Vortex
-;		lxi	d,LogoVortex
-;		lxi	b,HILO(8,56)
-;		call	DrawSprite
-
 ;		call	ShowPanel
 ;		call	Intro
-		call	StartGame
+;		call	StartGame
 
 ;		mvi	a,11
 ;		sta	ZoneNumber
@@ -159,8 +140,8 @@ Start:
 ;		call	PrtScore
 
 
-Infty:	;jmp Infty
-	jmp Start
+Infty:		;jmp Infty
+		jmp Start
 
 ;------------------------------------------------------------------------------
 

@@ -130,7 +130,7 @@ GameFrame:	call	UndrawSpr	; zmaz sprity z VO2
 		call	ProcSpr		; spracuj pohyb spritov a ich kolizie
 		call	SortSpr		; zorad sprity podla IZO hlbky
 		call	DrawSpr		; vykresli sprity
-		call	RedrawChanges	; prekresli zmeny
+		call	RedrawChangesDI	; prekresli zmeny
 		call	LTronMove	; zobraz posun LaserTronu na panely
 		call	Sound		; spracuj zvuky
 
@@ -452,7 +452,7 @@ AutoStepL:	push	b		; odpamataj pocitadlo
 		call	ProcSpr		; spracuj pohyb spritov a ich kolizie
 		call	SortSpr		; zorad sprity podla IZO hlbky
 		call	DrawSpr		; vykresli sprity
-		call	RedrawChanges	; prekresli zmeny
+		call	RedrawChangesDI	; prekresli zmeny
 		call	LTronMove	; zobraz posun LaserTronu na panely
 		call	Sound		; spracuj zvuky
 		pop	b		; obnov pocitadlo
@@ -467,7 +467,7 @@ OneStep:	call	UndrawSpr	; zmaz sprity z VO2
 		call	ProcSpr		; spracuj pohyb spritov a ich kolizie
 		call	SortSpr		; zorad sprity podla IZO hlbky
 		call	DrawSpr		; vykresli sprity
-		call	RedrawChanges	; prekresli zmeny
+		call	RedrawChangesDI	; prekresli zmeny
 		call	LTronMove	; zobraz posun LaserTronu na panely
 		jmp	Sound		; spracuj zvuky
 

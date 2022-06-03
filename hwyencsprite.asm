@@ -873,7 +873,14 @@ UndrawSprD:	pop	h		; obnov adresu zoznamu
 		jmp	UndrawSprA	; pokracuj dalsim spritom
 
 ;------------------------------------------------------------------------------
-; Перерисовать изменения.
+; Перерисовать изменения без прерываний
+RedrawChangesDI:
+		di
+		call	RedrawChanges
+		ei
+		ret
+
+; Перерисовать изменения
 RedrawChanges:
 		lxi	h,RedrawList	; zoznam adries pre aplikovanie zmien
 RedrawChangesA:	mov	a,m		; ширина в A

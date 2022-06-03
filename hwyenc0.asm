@@ -22,8 +22,7 @@
 
 ;----------------------------------------------------------------------------
 
-Start	.equ	2E0h
-
+	.EXPORT Start
 	.EXPORT KeyLineEx, KeyLine0, KeyLine7
 	.EXPORT BorderColor, SetPaletteGame
 
@@ -38,7 +37,7 @@ Start	.equ	2E0h
 	lxi	h,0C3F3h
 	shld	0
 	mov	a,h
-	lxi	h,Restart
+	lxi	h,RestartInt
 	shld	2
 	sta	38h
 	lxi	h,KEYINT		; interrupt handler address
@@ -67,21 +66,21 @@ Init_1:
 	lxi	d,0A000h		; destination addr
 	call	unlzsa2
 
-Restart:
+RestartInt:
 	lxi	sp,100h
 	mvi	a, 88h
-	out	4		; initialize R-Sound 2
+	out	4			; initialize R-Sound 2
 
 ; Set palette for the title screen
 	lxi	h, PaletteTitle+15
 	call	SetPalette
-
 ;	ei
-	jp Start
+	jp	Start
 
 ; Set game palette
 SetPaletteGame:
 	lxi	h, PaletteGame+15
+	
 ; Programming the Palette
 SetPalette:
 	ei
@@ -182,10 +181,7 @@ PaletteTitle:
 
 ;----------------------------------------------------------------------------
 
-; Filler
-	.org	Start-1
-	.db 0
-
+Start:
 	.end
 
 ;----------------------------------------------------------------------------

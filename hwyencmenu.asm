@@ -171,13 +171,13 @@ AnimateLabel:
 ;------------------------------------------------------------------------------
 ; I: DE=adresa dat nadpisu, BC=адрес назначения vo VO
 DrawLabelLine:
-		lxi	h,SprBrickX1	; adresa spritu SprBlast6
+		lxi	h,SprBlast6	; adresa spritu SprBlast6
 		call	DrawLblSprK	; zobraz riadok spritov
-		lxi	h,SprBrickX2	; adresa spritu SprBrickA3
+		;lxi	h,SprBrickA3	; adresa spritu SprBrickA3
+		;call	DrawLblSprK	; zobraz riadok spritov
+		lxi	h,SprBrickX2	; adresa spritu SprBrickA2
 		call	DrawLblSprK	; zobraz riadok spritov
-		lxi	h,SprBrickX3	; adresa spritu SprBrickA2
-		call	DrawLblSprK	; zobraz riadok spritov
-		lxi	h,SprBrickX4	; adresa spritu SprBrickM
+		lxi	h,SprBrickM	; adresa spritu SprBrickM
 		call	DrawLblSpr	; zobraz riadok spritov
 
 		lxi	h,5		; posun sa na dalsi riadok

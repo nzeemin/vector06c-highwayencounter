@@ -145,7 +145,7 @@ CpyInnerScrL:
 	 	inx	h
 	;
 		mov	a,b
-		ani	0E0h
+		ani	BaseVramAdr/256 ;0E0h
 		mov	b,a		; к началу строки
 		dcr	c		; перейти к следующей микро-строке
 		dcr	e		; уменьшаем счётчик
@@ -368,7 +368,6 @@ Copy8:		mov	a,m
 ; I: HL=zdroj, DE=ciel, BC=velkost bloku
 ; O: -
 ; M: все
-	#if Mem256
 Copy16:		mov	a,m
 		stax	d
 		inx	h
@@ -378,7 +377,6 @@ Copy16:		mov	a,m
 		ora	c
 		jnz	Copy16
 		ret
-	#endif
 
 ;------------------------------------------------------------------------------
 ; Vyplnenie bloku o max. velkosti 65536 bytov.
