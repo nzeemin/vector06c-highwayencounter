@@ -23,7 +23,7 @@
 ;----------------------------------------------------------------------------
 
 	.EXPORT Start
-	.EXPORT KeyLineEx, KeyLine0, KeyLine7
+	.EXPORT KeyLineEx, KeyLine0, KeyLine7, JoystickP
 	.EXPORT BorderColor, SetPaletteGame
 
 ;----------------------------------------------------------------------------
@@ -70,6 +70,13 @@ RestartInt:
 	lxi	sp,100h
 	mvi	a, 88h
 	out	4			; initialize R-Sound 2
+; Joystick init
+	mvi	a, 83h		; control byte
+	out	4		; initialize the I/O controller
+	mvi	a, 9Fh		; bits to check Joystick-P, both P1 and P2
+	out	5		; set Joystick-P query bits
+	in	6		; read Joystick-P initial value
+	sta	KEYINT_J+1	; store as xra instruction parameter
 
 ; Set palette for the title screen
 	lxi	h, PaletteTitle+15
@@ -134,6 +141,13 @@ KEYINT:
 	out	3
 	in	2
 	sta	KeyLine7
+; Joystick scan
+	in	6		; read Joystick-P
+KEYINT_J:
+	xri	0		; XOR with initial value - mutable param!
+	cma
+	sta	JoystickP	; save to analyze later
+
 ; Scrolling, screen mode, border
 	mvi	a, 88h
 	out	0
@@ -155,6 +169,7 @@ KeyLine0:	.db 11111111b
 ;KeyLine5:	.db 11111111b
 ;KeyLine6:	.db 11111111b
 KeyLine7:	.db 11111111b
+JoystickP:	.db 11111111b
 
 BorderColor:	.db 0		; border color number 0..15
 

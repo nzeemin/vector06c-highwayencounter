@@ -151,7 +151,7 @@ ReadKeyboard:
 		xra	a
 		sta	ReadKeyboard_3+1
 		lxi	h,ReadKeyboard_map  ; Point HL at the keyboard list
-		mvi	b,3		; number of rows to check
+		mvi	b,4		; number of rows to check
 ReadKeyboard_0:        
 		mov	e,m		; get address low
 		inx	h
@@ -186,7 +186,8 @@ ReadKeyboard_map:					 ; 7   6   5   4   3   2   1   0
 		.DB	$01,$04,$02,$08,$10,$80,$10,$10  ; Dn  Rt  Up  Lt  ZB  VK  PS  Tab
 		.DW	KeyLine7
 		.DB	$10,$00,$08,$00,$04,$00,$00,$00  ; Spc  ^   ]   \   [   Z   Y   X
-
+		.DW	JoystickP
+		.DB	$10,$10,$00,$00,$01,$02,$08,$04  ; Fr  Fr  --  --  Dn  Up  Lt  Rt
 ;------------------------------------------------------------------------------
 
 WaitAnyKey2:
