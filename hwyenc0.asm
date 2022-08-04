@@ -58,13 +58,13 @@ Init_1:
 	dcr	h
 	jnz	Init_1
 ; Decompress the code and sprites from 08000h+LZSASIZET to Start
-	lxi	h,08000h+LZSASIZET	; source addr
-	lxi	d,Start			; destination addr
-	call	unlzsa2
+	lxi	d,08000h+LZSASIZET	; source addr
+	lxi	b,Start			; destination addr
+	call	dzx0
 ; Decompress 24K of the title screen from 8000h to A000h
-	lxi	h,08000h		; source addr
-	lxi	d,0A000h		; destination addr
-	call	unlzsa2
+	lxi	d,08000h		; source addr
+	lxi	b,0A000h		; destination addr
+	call	dzx0
 
 RestartInt:
 	lxi	sp,100h
@@ -177,7 +177,118 @@ PaletteTitle:
 
 ;----------------------------------------------------------------------------
 
-#INCLUDE "unlzsa2.asm"
+; ZX0 decompressor code by Ivan Gorodetsky
+; https://github.com/ivagorRetrocomp/DeZX/blob/main/ZX0/8080/OLD_V1/dzx0_CLASSIC.asm
+; input: 	de=compressed data start
+;			bc=uncompressed destination start
+
+#ifdef BACKWARD
+#define NEXT_HL dcx h
+#define NEXT_DE dcx d
+#define NEXT_BC dcx b
+#else
+#define NEXT_HL inx h
+#define NEXT_DE inx d
+#define NEXT_BC inx b
+#endif
+
+dzx0:
+#ifdef BACKWARD
+		lxi h,1
+		push h
+		dcr l
+#else
+		lxi h,0FFFFh
+		push h
+		inx h
+#endif
+		mvi a,080h
+dzx0_literals:
+		call dzx0_elias
+		call dzx0_ldir
+		jc dzx0_new_offset
+		call dzx0_elias
+dzx0_copy:
+		xchg
+		xthl
+		push h
+		dad b
+		xchg
+		call dzx0_ldir
+		xchg
+		pop h
+		xthl
+		xchg
+		jnc dzx0_literals
+dzx0_new_offset:
+		call dzx0_elias
+#ifdef BACKWARD
+		inx sp
+		inx sp
+		dcr h
+		rz
+		dcr l
+		push psw
+		mov a,l
+#else
+		mov h,a
+		pop psw
+		xra a
+		sub l
+		rz
+		push h
+#endif
+		rar\ mov h,a
+		ldax d
+		rar\ mov l,a
+		NEXT_DE
+#ifdef BACKWARD
+		inx h
+#endif
+		xthl
+		mov a,h
+		lxi h,1
+#ifdef BACKWARD
+		cc dzx0_elias_backtrack
+#else
+		cnc dzx0_elias_backtrack
+#endif
+		inx h
+		jmp dzx0_copy
+dzx0_elias:
+		inr l
+dzx0_elias_loop:	
+		add a
+		jnz dzx0_elias_skip
+		ldax d
+		NEXT_DE
+		ral
+dzx0_elias_skip:
+#ifdef BACKWARD
+		rnc
+#else
+		rc
+#endif
+dzx0_elias_backtrack:
+		dad h
+		add a
+		jnc dzx0_elias_loop
+		jmp dzx0_elias
+
+dzx0_ldir:
+		push psw
+dzx0_ldir1:
+		ldax d
+		stax b
+		NEXT_DE
+		NEXT_BC
+		dcx h
+		mov a,h
+		ora l
+		jnz dzx0_ldir1
+		pop psw
+		add a
+		ret 
 
 ;----------------------------------------------------------------------------
 

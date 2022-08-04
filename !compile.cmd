@@ -1,25 +1,27 @@
 @echo off
 if exist hwyenc.rom del hwyenc.rom
 if exist hwyenc0.bin del hwyenc0.bin
+if exist hwyenc0.lst del hwyenc0.lst
 if exist hwyenc0.exp del hwyenc0.exp
 if exist hwyenc1.bin del hwyenc1.bin
 if exist hwyenc1.txt del hwyenc1.txt
-if exist hwyenctitle.lzsa del hwyenctitle.lzsa
+if exist hwyenctitle.zx0 del hwyenctitle.zx0
+if exist hwyenc1.zx0 del hwyenc1.zx0
 
 rem Define ESCchar to use in ANSI escape sequences
 rem https://stackoverflow.com/questions/2048509/how-to-echo-with-different-colors-in-the-windows-command-line
 for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "ESCchar=%%E"
 
 @echo on
-tools\lzsa.exe -f2 -r -c hwyenctitle.bin hwyenctitle.lzsa
+tools\salvador.exe -classic hwyenctitle.bin hwyenctitle.zx0
 @if errorlevel 1 goto Failed
 @echo off
-dir /-c hwyenctitle.lzsa|findstr /R /C:"hwyenctitle.lzsa"
+dir /-c hwyenctitle.zx0|findstr /R /C:"hwyenctitle.zx0"
 
-call :FileSize hwyenctitle.lzsa
+call :FileSize hwyenctitle.zx0
 set lzsasizet=%fsize%
 
-rem First pass on TASM, LZSA stream sizes are not known yet
+rem First pass on TASM, ZX0 stream sizes are not known yet
 @echo on
 tools\tasm -85 -b hwyenc0.asm hwyenc0.bin -dLZSASIZET=%lzsasizet% -dLZSASIZE1=16000
 @if errorlevel 1 goto Failed
@@ -40,21 +42,21 @@ findstr /B "HwyEnc" hwyenc1.txt
 dir /-c hwyenc1.bin|findstr /R /C:"hwyenc1.bin"
 
 @echo on
-tools\lzsa.exe -f2 -r -c hwyenc1.bin hwyenc1.lzsa
+tools\salvador.exe -classic hwyenc1.bin hwyenc1.zx0
 @if errorlevel 1 goto Failed
 @echo off
-dir /-c hwyenc1.lzsa|findstr /R /C:"hwyenc1.lzsa"
+dir /-c hwyenc1.zx0|findstr /R /C:"hwyenc1.zx0"
 
-call :FileSize hwyenc1.lzsa
+call :FileSize hwyenc1.zx0
 set lzsasize1=%fsize%
 
-rem Second pass on TASM, now we know LZSA stream sizes
+rem Second pass on TASM, now we know ZX0 stream sizes
 @echo on
 tools\tasm -85 -b hwyenc0.asm hwyenc0.bin -dLZSASIZET=%lzsasizet% -dLZSASIZE1=%lzsasize1%
 @if errorlevel 1 goto Failed
 @echo off
 
-copy /b hwyenc0.bin+hwyenctitle.lzsa+hwyenc1.lzsa hwyenc.rom >nul
+copy /b hwyenc0.bin+hwyenctitle.zx0+hwyenc1.zx0 hwyenc.rom >nul
 
 dir /-c hwyenc.rom|findstr /R /C:"hwyenc.rom"
 
