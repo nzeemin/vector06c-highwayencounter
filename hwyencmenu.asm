@@ -17,7 +17,7 @@
 
 ; Costa Panayi, Vortex Software, 1985
 ; RM-TEAM, 2014, 2015, 2016
-; nzeemin 2022 порт на Вектор-06Ц
+; nzeemin 2022/2026 порт на Вектор-06Ц
 ;------------------------------------------------------------------------------
 
 ;------------------------------------------------------------------------------
@@ -145,32 +145,48 @@ MenuK:		dec b
 
 ;------------------------------------------------------------------------------
 ; animovane vykrelsenie nadpisu zo spritov
+; Точные значения из Spectrum (LB33C): на строку — байт VO и фаза сдвига.
+; A = фаза строки k=(phaseInit+1)&3; байты/фазы как на Спектруме (8px/байт).
 AnimateLabel:
 		ld de,LabelHE+4	; data nadpisu (zobrazuje sa zprava)
+		ld a,2		; фаза строки 1
 		ld bc,InnerScr+(11*SVO)+22 ; adresa VO
 		call DrawLabelLine	; zobraz 1. rad
+		ld a,3
 		ld bc,InnerScr+(14*SVO)+23 ; adresa VO
 		call DrawLabelLine	; zobraz 2. rad
+		ld a,0
 		ld bc,InnerScr+(17*SVO)+24 ; adresa VO
 		call DrawLabelLine	; zobraz 3. rad
-		ld bc,InnerScr+(20*SVO)+25 ; adresa VO
+		ld a,1
+		ld bc,InnerScr+(20*SVO)+24 ; adresa VO
 		call DrawLabelLine	; zobraz 4. rad
-		ld bc,InnerScr+(23*SVO)+26 ; adresa VO
+		ld a,2
+		ld bc,InnerScr+(23*SVO)+25 ; adresa VO
 		call DrawLabelLine	; zobraz 5. rad
+		ld a,0
 		ld bc,InnerScr+(29*SVO)+27 ; adresa VO
 		call DrawLabelLine	; zobraz 6. rad
-		ld bc,InnerScr+(32*SVO)+28 ; adresa VO
+		ld a,1
+		ld bc,InnerScr+(32*SVO)+27 ; adresa VO
 		call DrawLabelLine	; zobraz 7. rad
-		ld bc,InnerScr+(35*SVO)+29 ; adresa VO
+		ld a,2
+		ld bc,InnerScr+(35*SVO)+28 ; adresa VO
 		call DrawLabelLine	; zobraz 8. rad
-		ld bc,InnerScr+(38*SVO)+30 ; adresa VO
+		ld a,3
+		ld bc,InnerScr+(38*SVO)+29 ; adresa VO
 		call DrawLabelLine	; zobraz 9. rad
-		ld bc,InnerScr+(41*SVO)+31 ; adresa VO
+		ld a,0
+		ld bc,InnerScr+(41*SVO)+30 ; adresa VO
 					; zobraz 10. rad
 
 ;------------------------------------------------------------------------------
-; I: DE=adresa dat nadpisu, BC=адрес назначения vo VO
+; I: A=фаза строки k, DE=adresa dat nadpisu, BC=адрес назначения vo VO
 DrawLabelLine:
+		ld (LblPhaseD+1),A	; k — для фазы p=(D+k)&3
+		inc a
+		and 3
+		ld (LblPhaseT+1),A	; (k+1)&3 — для типа сдвига (p+1)&3
 		ld hl,SprBlast6	; adresa spritu SprBlast6
 		call DrawLblSprK	; zobraz riadok spritov
 		;lxi	h,SprBrickA3	; adresa spritu SprBrickA3
@@ -205,21 +221,22 @@ DrawLblSprA:	push de; запомнить счетчик и тип процеду
 		push bc		; odpamataj cielovu adresu vo VO
 		ld l,c		; адрес назначения в HL
 		ld h,b
-		ld a,d
+		ld a,d		; тип сдвига = (D+k+1)&3 (фаза p=(D+k)&3)
+LblPhaseT:	add a,0		; +(k+1), самомодиф. в DrawLabelLine
 		and 3		; теперь в A тип процедуры 0..3
 SpriteAdr:	ld de,0; adresa spritu do DE
 		call DrawSpriteM	; zobraz sprite
 		pop bc		; obnov cielovu adresu
-DrawLblSprD:	ld hl,(3*SVO); posun cielovu adresu
+DrawLblSprD:	ld hl,3*SVO; posun cielovu adresu
 		add HL,bc		; на 3 микро-строки ниже
 		ld c,l		; a uloz do BC
 		ld b,h
 LabelAdr:	ld hl,0; adresa dat nadpisu
 		pop de		; obnov pocitadlo bodov a masku
-		ld a,d		; а также на 6 точек влево
-;LabelShift:	adi	0		; дополнительный сдвиг на 0..3
+		ld a,d		; шаг байта влево, когда фаза p=(D+k)&3 != 0
+LblPhaseD:	add a,0		; +k, самомодиф. в DrawLabelLine
 		and 3
-		jp Z,DrawLblSprDA
+		jp Z,DrawLblSprDA	; p==0 — без сдвига байта (аккумулятор не переполнился)
 		dec bc
 DrawLblSprDA:	ld a,e
 		rlca

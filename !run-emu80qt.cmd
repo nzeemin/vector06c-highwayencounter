@@ -1,1 +1,1 @@
-start C:\bin\emu80qt\emu80qt.exe hwyenc.rom
+start x-emu80qt\emu80qt.exe -v hwyenc.rom

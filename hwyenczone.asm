@@ -17,7 +17,7 @@
 
 ; Costa Panayi, Vortex Software, 1985
 ; RM-TEAM, 2014, 2015, 2016
-; nzeemin 2022 порт на Вектор-06Ц
+; nzeemin 2022/2026 порт на Вектор-06Ц
 ;------------------------------------------------------------------------------
 
 ;------------------------------------------------------------------------------
@@ -393,7 +393,7 @@ DrawSubZone3:	ld hl,DrawSZSprS2; adresa instrukcie JR d pre vynechanie
 		ld bc,InnerScr2+(40*SVO)+40 ; adresa VO
 		ld de,(10*256)+(20*2)	; pociatocny pocet spritov v skupine
 					; pocet skupin
-		ld hl,(12*SVO)	; offset upravy adresy VO
+		ld hl,12*SVO	; offset upravy adresy VO
 		ld (SubZoneOffVO),HL
 		ld a,-2		; inkrement poctu spritov v skupine
 		ld (SubZoneIncCnt),A
