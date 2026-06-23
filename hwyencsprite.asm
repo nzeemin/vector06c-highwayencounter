@@ -966,41 +966,41 @@ RedrawChangesC:	dec hl; posun na znakovu poziciu do prava
 ;   DB ширина в sesticiach,
 ;   DW адрес VO2, адрес VRAM, адрес флагов (MarkBuff)
 RedrawList:	.db	10
-		.dw	InnerScr2+(17*SVO8)+9,BaseVramAdr+(2<<8)|(255-19*8), MarkBuff+(17*SVO)+9
+		.dw	InnerScr2+(17*SVO8)+09, GameVramAdr+(09<<8)-17*8, MarkBuff+(17*SVO)+9
 		.db	12
-		.dw	InnerScr2+(16*SVO8)+11,BaseVramAdr+(4<<8)|(255-18*8), MarkBuff+(16*SVO)+11
+		.dw	InnerScr2+(16*SVO8)+11, GameVramAdr+(11<<8)-16*8, MarkBuff+(16*SVO)+11
 		.db	14
-		.dw	InnerScr2+(15*SVO8)+13,BaseVramAdr+(6<<8)|(255-17*8), MarkBuff+(15*SVO)+13
+		.dw	InnerScr2+(15*SVO8)+13, GameVramAdr+(13<<8)-15*8, MarkBuff+(15*SVO)+13
 		.db	16
-		.dw	InnerScr2+(14*SVO8)+15,BaseVramAdr+(8<<8)|(255-16*8), MarkBuff+(14*SVO)+15
+		.dw	InnerScr2+(14*SVO8)+15, GameVramAdr+(15<<8)-14*8, MarkBuff+(14*SVO)+15
 		.db	18
-		.dw	InnerScr2+(13*SVO8)+17,BaseVramAdr+(10<<8)|(255-15*8), MarkBuff+(13*SVO)+17
+		.dw	InnerScr2+(13*SVO8)+17, GameVramAdr+(17<<8)-13*8, MarkBuff+(13*SVO)+17
 		.db	20
-		.dw	InnerScr2+(12*SVO8)+19,BaseVramAdr+(12<<8)|(255-14*8), MarkBuff+(12*SVO)+19
+		.dw	InnerScr2+(12*SVO8)+19, GameVramAdr+(19<<8)-12*8, MarkBuff+(12*SVO)+19
 		.db	22
-		.dw	InnerScr2+(11*SVO8)+21,BaseVramAdr+(14<<8)|(255-13*8), MarkBuff+(11*SVO)+21
+		.dw	InnerScr2+(11*SVO8)+21, GameVramAdr+(21<<8)-11*8, MarkBuff+(11*SVO)+21
 		.db	24
-		.dw	InnerScr2+(10*SVO8)+23,BaseVramAdr+(16<<8)|(255-12*8), MarkBuff+(10*SVO)+23
+		.dw	InnerScr2+(10*SVO8)+23, GameVramAdr+(23<<8)-10*8, MarkBuff+(10*SVO)+23
 		.db	26
-		.dw	InnerScr2+(9*SVO8)+25,BaseVramAdr+(18<<8)|(255-11*8), MarkBuff+(9*SVO)+25
+		.dw	InnerScr2+(09*SVO8)+25, GameVramAdr+(25<<8)-09*8, MarkBuff+(9*SVO)+25
 		.db	27
-		.dw	InnerScr2+(8*SVO8)+26,BaseVramAdr+(19<<8)|(255-10*8), MarkBuff+(8*SVO)+26
+		.dw	InnerScr2+(08*SVO8)+26, GameVramAdr+(26<<8)-08*8, MarkBuff+(8*SVO)+26
 		.db	27
-		.dw	InnerScr2+(7*SVO8)+28,BaseVramAdr+(21<<8)|(255-9*8), MarkBuff+(7*SVO)+28
+		.dw	InnerScr2+(07*SVO8)+28, GameVramAdr+(28<<8)-07*8, MarkBuff+(7*SVO)+28
 		.db	27
-		.dw	InnerScr2+(6*SVO8)+31,BaseVramAdr+(24<<8)|(255-8*8), MarkBuff+(6*SVO)+31
+		.dw	InnerScr2+(06*SVO8)+31, GameVramAdr+(31<<8)-06*8, MarkBuff+(6*SVO)+31
 		.db	25
-		.dw	InnerScr2+(5*SVO8)+31,BaseVramAdr+(24<<8)|(255-7*8), MarkBuff+(5*SVO)+31
+		.dw	InnerScr2+(05*SVO8)+31, GameVramAdr+(31<<8)-05*8, MarkBuff+(5*SVO)+31
 		.db	23
-		.dw	InnerScr2+(4*SVO8)+31,BaseVramAdr+(24<<8)|(255-6*8), MarkBuff+(4*SVO)+31
+		.dw	InnerScr2+(04*SVO8)+31, GameVramAdr+(31<<8)-04*8, MarkBuff+(4*SVO)+31
 		.db	21
-		.dw	InnerScr2+(3*SVO8)+31,BaseVramAdr+(24<<8)|(255-5*8), MarkBuff+(3*SVO)+31
+		.dw	InnerScr2+(03*SVO8)+31, GameVramAdr+(31<<8)-03*8, MarkBuff+(3*SVO)+31
 		.db	19
-		.dw	InnerScr2+(2*SVO8)+31,BaseVramAdr+(24<<8)|(255-4*8), MarkBuff+(2*SVO)+31
+		.dw	InnerScr2+(02*SVO8)+31, GameVramAdr+(31<<8)-02*8, MarkBuff+(2*SVO)+31
 		.db	17
-		.dw	InnerScr2+(1*SVO8)+31,BaseVramAdr+(24<<8)|(255-3*8), MarkBuff+(1*SVO)+31
+		.dw	InnerScr2+(01*SVO8)+31, GameVramAdr+(31<<8)-01*8, MarkBuff+(1*SVO)+31
 		.db	15
-		.dw	InnerScr2+(0*SVO8)+31,BaseVramAdr+(24<<8)|(255-2*8), MarkBuff+(0*SVO)+31
+		.dw	InnerScr2+(00*SVO8)+31, GameVramAdr+(31<<8)-00*8, MarkBuff+(0*SVO)+31
 		.db	0
 
 ;------------------------------------------------------------------------------

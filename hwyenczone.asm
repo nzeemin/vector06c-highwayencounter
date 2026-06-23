@@ -48,7 +48,7 @@ DrawZone:	ld de,InnerScr2; нарисовать сетку в VO2
 		; нарисовать Зону на VRAM
  		ld l,VVO
 		ld de,InnerScr2
-		ld bc,BaseVramAdr+(256-24)
+		ld bc,GameVramAdr
 		call DrawInnerScr
 
 		; перевести VO2 в VO1

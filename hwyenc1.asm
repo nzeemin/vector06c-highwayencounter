@@ -29,7 +29,8 @@ CheatLife	.equ	0
 CheatZone0	.equ	0
 
 ;------------------------------------------------------------------------------
-BaseVramAdr	.equ	0E000h		; Базовый адрес для игрового экрана
+BaseVramAdr	.equ	0E000h		; Базовый адрес экрана
+GameVramAdr = BaseVramAdr + (256-3*8)	; Базовый адрес для игрового экрана
 SVO		.equ	32		; ширина строки теневого экрана, в столбцах/байтах
 SVO8		.equ	(SVO*8)
 VVO		.equ	144		; vyska VO v mikroriadkoch
@@ -55,12 +56,21 @@ Stack		.equ	100h ;MarkBuffBeg	; zasobnik pred vnutorne obrazovky
 		;call ClearPlane3
 		ei
 ; Waiting on the title screen
-		call WaitAnyKey2
+;		call WaitAnyKey2
 		di
 		call ClearPlane012
 		call SetPaletteGame
 
-;		call	Menu
+; 		; --- TEMP capture zone ---
+; 		ld hl,BackupVars
+; 		ld de,Vars
+; 		ld b,VarsLen
+; 		call Copy8
+; 		call Demo
+; TempCapLoop:	jp TempCapLoop
+; 		; --- END TEMP ---
+
+		call	Menu
 ;		call	ShowInfo
 
 		call DrawGridM
