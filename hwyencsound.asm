@@ -25,111 +25,111 @@
 ; I: H=dlzka,L=vyska
 ; O: -
 ; M: AF, BC, DE
-Beep:		mvi	b,0
-		mov	c,h
-		mov	d,l
-		mov	e,l
-		dcr	e
-		xra	a
-BeepA:		out	000h
-		inr	d
-		jnz	BeepB
-		mov	d,l
-		xri	1
-BeepB:		inr	e
-		jnz	BeepC
-		mov	e,l
-		dcr	e
-		xri	1
-BeepC:		dcr	b
-		jnz	BeepA
-		dcr	c
-		jnz	BeepA
-		out	000h
+Beep:		ld b,0
+		ld c,h
+		ld d,l
+		ld e,l
+		dec e
+		xor a
+BeepA:		out (000h),A
+		inc d
+		jp NZ,BeepB
+		ld d,l
+		xor 1
+BeepB:		inc e
+		jp NZ,BeepC
+		ld e,l
+		dec e
+		xor 1
+BeepC:		dec b
+		jp NZ,BeepA
+		dec c
+		jp NZ,BeepA
+		out (000h),A
 		ret
 
 ;------------------------------------------------------------------------------
 ; Zvuky podla bitov 1, 3, 4, 6 a 7 premennej SndType
-Sound:		lda	SndType		; typ zvuku
-		mov	c,a
-		ani	2
-		jz	SoundA
-		lxi	h,0FA04h
-		lxi	d,4608h
-		jmp	SoundW
+Sound:		ld A,(SndType); typ zvuku
+		ld c,a
+		and 2
+		jp Z,SoundA
+		ld hl,0FA04h
+		ld de,4608h
+		jp SoundW
 
-SoundA:		lxi	h,SoundI
-		mvi	m,0B2h		; instrukcia ORA D
-		mov	a,c
-		ani	64
-		jz	SoundB
-		mvi	c,5
-		lxi	d,0709h
-		jmp	SoundD
+SoundA:		ld hl,SoundI
+		ld (HL),0B2h		; instrukcia ORA D
+		ld a,c
+		and 64
+		jp Z,SoundB
+		ld c,5
+		ld de,0709h
+		jp SoundD
 
-SoundB:		mvi	m,0A2h		; instrukcia ANA D
-		mov	a,c
-		ani	8
-		jz	SoundC
-		mvi	c,10
-		lxi	d,3F08h
-		jmp	SoundD
+SoundB:		ld (HL),0A2h; instrukcia ANA D
+		ld a,c
+		and 8
+		jp Z,SoundC
+		ld c,10
+		ld de,3F08h
+		jp SoundD
 
-SoundC:		mov	a,c
-		rlc
-		jnc	SoundH
-		mvi	c,2
-		lxi	d,0CC0Ch
+SoundC:		ld a,c
+		rlca
+		jp NC,SoundH
+		ld c,2
+		ld de,0CC0Ch
 
-SoundD:		mvi	b,2
-		mvi	l,2
+SoundD:		ld b,2
+		ld l,2
 SoundE:		;in	SysPC
-SoundF:		xri	4
-		push	b
-SoundG:		nop ;out	SysPC
-		dcr	b
-		jnz	SoundG
-		pop	b
-		dcr	l
-		jnz	SoundF
-		call	Rand		; nahodna hodnota do A
-		mov	h,a
-		ana	c
-		inr	a
-		mov	l,a
-		mov	a,h
-SoundI:		ana	d		; ANA D alebo ORA D
-		inr	a
-		mov	b,a
-		dcr	e
-		jnz	SoundE
-		jmp	SoundY
+SoundF:		xor 4
+		push bc
+SoundG:		nop;out	SysPC
+		dec b
+		jp NZ,SoundG
+		pop bc
+		dec l
+		jp NZ,SoundF
+		call Rand		; nahodna hodnota do A
+		ld h,a
+		and c
+		inc a
+		ld l,a
+		ld a,h
+SoundI:		and d; ANA D alebo ORA D
+		inc a
+		ld b,a
+		dec e
+		jp NZ,SoundE
+		jp SoundY
 
-SoundH:		mov	a,c
-		ani	16
-		jz	SoundY
-		lxi	h,3205h
-		lxi	d,1E06h
+SoundH:		ld a,c
+		and 16
+		jp Z,SoundY
+		ld hl,3205h
+		ld de,1E06h
 
 SoundW:		;in	SysPC
-		mov	c,l
-SoundV:		xri	4
-		mov	b,d
-SoundX:		nop ;out	SysPC
-		dcr	b
-		jnz	SoundX
-		dcr	c
-		jnz	SoundV
-		mov	a,d
-		sub	h
-		mov	d,a
-		dcr	e
-		jnz	SoundW
+		ld c,l
+SoundV:		xor 4
+		ld b,d
+SoundX:		nop;out	SysPC
+		dec b
+		jp NZ,SoundX
+		dec c
+		jp NZ,SoundV
+		ld a,d
+		sub h
+		ld d,a
+		dec e
+		jp NZ,SoundW
 SoundY:		;in	SysPC
-		ani	0F8h
+		and 0F8h
 		nop ;out	SysPC
-		xra	a
-		sta	SndType
+		xor a
+		ld (SndType),A
 		ret
 
 ;------------------------------------------------------------------------------

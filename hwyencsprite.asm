@@ -25,19 +25,19 @@
 ; I: DE=данные спрайта, HL=адрес VRAM, B=ширина, C=высота
 ; O: -
 ; M: все
-DrawSprite:	push	b
-		push	h
-DrawSpriteL:	ldax	d		; vezmi byte spritu
-		inx	d		; posun v datach
-		mov	m,a		; uloz do VRAM
-		inr	h		; posun adresu VRAM
-		dcr	b		; opakuj pre celu sirku
-		jnz	DrawSpriteL
-		pop	h
-		dcr	l
-DrawSpriteW:	pop	b
-		dcr	c		; opakuj pre celu vysku spritu
-		jnz	DrawSprite
+DrawSprite:	push bc
+		push hl
+DrawSpriteL:	ld A,(de); vezmi byte spritu
+		inc de		; posun v datach
+		ld (HL),a		; uloz do VRAM
+		inc h		; posun adresu VRAM
+		dec b		; opakuj pre celu sirku
+		jp NZ,DrawSpriteL
+		pop hl
+		dec l
+DrawSpriteW:	pop bc
+		dec c		; opakuj pre celu vysku spritu
+		jp NZ,DrawSprite
 		ret
 
 ;------------------------------------------------------------------------------
@@ -46,78 +46,78 @@ DrawSpriteW:	pop	b
 ; I: DE=adresa dat spritu, HL=adresa VO; A=тип процедуры 0..3
 ; O: -
 ; M: все
-DrawSpriteM:	
-		push	h
-		add	a		; *2
-		add	a		; *4
-		add	a		; *8
-		mov	c,a
-		mvi	b,0
-		lxi	h,DrawSpriteM0
-		dad	b
-		pop	b
-		pchl
+DrawSpriteM:
+		push hl
+		add A,a		; *2
+		add A,a		; *4
+		add A,a		; *8
+		ld c,a
+		ld b,0
+		ld hl,DrawSpriteM0
+		add HL,bc
+		pop bc
+		jp (HL)
 ;
 DrawSpriteM0:	; тип процедуры 0
-		mov	l,c
-		mov	h,b
-		mvi	c,24
-		jmp	DrawSprite4	; рисование спрайта +2
+		ld l,c
+		ld h,b
+		ld c,24
+		jp DrawSprite4	; рисование спрайта +2
 		nop
 		; тип процедуры 1
-		mov	l,c
-		mov	h,b
-		mvi	c,24
-		jmp	DrawSprite6	; рисование спрайта -4
+		ld l,c
+		ld h,b
+		ld c,24
+		jp DrawSprite6	; рисование спрайта -4
 		nop
 		; тип процедуры 2
-		mov	l,c
-		mov	h,b
-		mvi	c,24
-		jmp	DrawSprite2	; рисование спрайта -2
+		ld l,c
+		ld h,b
+		ld c,24
+		jp DrawSprite2	; рисование спрайта -2
 		nop
 		; тип процедуры 3
-		mov	l,c
-		mov	h,b
-		mvi	c,24
-		jmp	DrawSpriteML	; рисование спрайта 0
+		ld l,c
+		ld h,b
+		ld c,24
+		jp DrawSpriteML	; рисование спрайта 0
 
-DrawSpriteML:	ldax	d		; maska
-		ana	m		; aplikuj masku na obsah VO
-		mov	m,a		; uloz zmenu
-		inx	d		; posun v datach
-		inx	h		; posun adresy VO
-		ldax	d		; opakuj este 2x
-		ana	m
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d
-		ana	m
-		mov	m,a
-		inx	d
-		dcx	h		; adresa VO nazad
-		dcx	h
-		ldax	d		; data spritu
-		ora	m		; pridaj data spritu
-		mov	m,a		; uloz zmenu do VO
-		inx	d		; posun v datach
-		inx	h		; posun adresy VO
-		ldax	d		; opakuj este 2x
-		ora	m
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d
-		ora	m
-		mov	m,a
-		inx	d
-		mov	a,c
-		lxi	b,-(2+SVO)	; posun adresu VO na predosly
-		dad	b		; mikroriadok
-		mov	c,a
-		dcr	c		; opakuj pre celu vysku
-		jnz	DrawSpriteML
+DrawSpriteML:	ld A,(de); maska
+		and (HL)		; aplikuj masku na obsah VO
+		ld (HL),a		; uloz zmenu
+		inc de		; posun v datach
+		inc hl		; posun adresy VO
+		ld A,(de)		; opakuj este 2x
+		and (HL)
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)
+		and (HL)
+		ld (HL),a
+		inc de
+		dec hl		; adresa VO nazad
+		dec hl
+		ld A,(de)		; data spritu
+		or (HL)		; pridaj data spritu
+		ld (HL),a		; uloz zmenu do VO
+		inc de		; posun v datach
+		inc hl		; posun adresy VO
+		ld A,(de)		; opakuj este 2x
+		or (HL)
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)
+		or (HL)
+		ld (HL),a
+		inc de
+		ld a,c
+		ld bc,-(2+SVO)	; posun adresu VO na predosly
+		add HL,bc		; mikroriadok
+		ld c,a
+		dec c		; opakuj pre celu vysku
+		jp NZ,DrawSpriteML
 		ret
 
 ;------------------------------------------------------------------------------
@@ -126,43 +126,43 @@ DrawSpriteML:	ldax	d		; maska
 ; I: DE=adresa dat spritu, HL=adresa VO
 ; O: -
 ; M: все
-DrawSprite0:	mvi	c,24		; vyska spritu 24 bodov
-DrawSprite0L:	ldax	d		; maska
-		ana	m		; aplikuj masku na obsah VO
-		mov	m,a		; uloz zmenu
-		inx	d		; posun v datach
-		inx	h		; posun adresy VO
-		ldax	d		; 2
-		ana	m
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 3
-		ana	m
-		mov	m,a
-		inx	d
-		dcx	h		; adresa VO nazad
-		dcx	h
-		ldax	d		; data spritu
-		ora	m		; pridaj data spritu
-		mov	m,a		; uloz zmenu do VO
-		inx	d		; posun v datach
-		inx	h		; posun adresy VO
-		ldax	d		; 2
-		ora	m
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 3
-		ora	m
-		mov	m,a
-		inx	d
-		mov	a,c
-		lxi	b,-(2+SVO)	; posun adresu VO na predosly
-		dad	b		; mikroriadok
-		mov	c,a
-		dcr	c		; opakuj pre celu vysku
-		jnz	DrawSprite0L
+DrawSprite0:	ld c,24; vyska spritu 24 bodov
+DrawSprite0L:	ld A,(de); maska
+		and (HL)		; aplikuj masku na obsah VO
+		ld (HL),a		; uloz zmenu
+		inc de		; posun v datach
+		inc hl		; posun adresy VO
+		ld A,(de)		; 2
+		and (HL)
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 3
+		and (HL)
+		ld (HL),a
+		inc de
+		dec hl		; adresa VO nazad
+		dec hl
+		ld A,(de)		; data spritu
+		or (HL)		; pridaj data spritu
+		ld (HL),a		; uloz zmenu do VO
+		inc de		; posun v datach
+		inc hl		; posun adresy VO
+		ld A,(de)		; 2
+		or (HL)
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 3
+		or (HL)
+		ld (HL),a
+		inc de
+		ld a,c
+		ld bc,-(2+SVO)	; posun adresu VO na predosly
+		add HL,bc		; mikroriadok
+		ld c,a
+		dec c		; opakuj pre celu vysku
+		jp NZ,DrawSprite0L
 		ret
 
 ;------------------------------------------------------------------------------
@@ -172,103 +172,103 @@ DrawSprite0L:	ldax	d		; maska
 ; O: -
 ; M: A, C, DE, HL
 DrawSpriteX:
-DrawSprite2:	mvi	c,24		; vyska spritu 24 bodov
-DrawSprite2L:	push	b
-		push	h		; odpamataj adresu VO
-		xchg			; predloha do HL
-		mov	a,m		; jeden riadok masky do DBC
-		inx	h
-		mov	b,m
-		inx	h
-		mov	c,m
-		inx	h
-		xthl			; odpamataj adresu predlohy
-		push	h		; aj adresu VO
+DrawSprite2:	ld c,24; vyska spritu 24 bodov
+DrawSprite2L:	push bc
+		push hl		; odpamataj adresu VO
+		ex DE,HL			; predloha do HL
+		ld a,(HL)		; jeden riadok masky do DBC
+		inc hl
+		ld b,(HL)
+		inc hl
+		ld c,(HL)
+		inc hl
+		ex (SP),HL			; odpamataj adresu predlohy
+		push hl		; aj adresu VO
 ;		ori	0C0h		; zlava vstupia do masky jednotky
-		rar			; odrotuj masku dolava
-		mov	d,a
-		mov	a,b
-		rar
-		mov	b,a
-		mov	a,c
-		rar
-		mov	b,a
-		mov	a,c
-		rar
-		mov	c,a
-		mov	a,d
-		rar
-		mov	d,a
-		rar
-		mov	d,a
-		mov	a,b
-		rar
-		mov	b,a
-		mov	a,c
-		rar
-		mov	b,a
-		mov	a,c
-		rar
-		mov	c,a
-		pop	h		; adresa VO do HL
-		mov	a,d		; get 1st mask byte
-		ana	m		; aplikuj narotovanu masku
-		mov	m,a
-		inx	h
-		mov	a,b
-		ana	m
-		mov	m,a
-		inx	h
-		mov	a,c
-		ana	m
-		mov	m,a
-		dcx	h
-		dcx	h
-		xthl			; adresa predlohy do HL
-		mov	a,m		; jeden riadok predlohy do DBC
-		inx	h
-		mov	b,m
-		inx	h
-		mov	c,m
-		inx	h
-		xthl			; odpamataj adresu predlohy
-		push	h		; aj adresu VO
+		rra			; odrotuj masku dolava
+		ld d,a
+		ld a,b
+		rra
+		ld b,a
+		ld a,c
+		rra
+		ld b,a
+		ld a,c
+		rra
+		ld c,a
+		ld a,d
+		rra
+		ld d,a
+		rra
+		ld d,a
+		ld a,b
+		rra
+		ld b,a
+		ld a,c
+		rra
+		ld b,a
+		ld a,c
+		rra
+		ld c,a
+		pop hl		; adresa VO do HL
+		ld a,d		; get 1st mask byte
+		and (HL)		; aplikuj narotovanu masku
+		ld (HL),a
+		inc hl
+		ld a,b
+		and (HL)
+		ld (HL),a
+		inc hl
+		ld a,c
+		and (HL)
+		ld (HL),a
+		dec hl
+		dec hl
+		ex (SP),HL			; adresa predlohy do HL
+		ld a,(HL)		; jeden riadok predlohy do DBC
+		inc hl
+		ld b,(HL)
+		inc hl
+		ld c,(HL)
+		inc hl
+		ex (SP),HL			; odpamataj adresu predlohy
+		push hl		; aj adresu VO
 ;		ora	a		; zlava vstupi do predlohy nula
-		rar			; odrotuj predlohu dolava
-		mov	d,a
-		mov	a,b
-		rar
-		mov	b,a
-		mov	a,c
-		rar
-		mov	c,a
-		mov	a,d
-		rar
-		mov	d,a
-		mov	a,b
-		rar
-		mov	b,a
-		mov	a,c
-		rar
-		mov	c,a
-		pop	h		; obnov adresu VO
-		mov	a,d		; odrotuj predlohu dolava este raz
-		ora	m		; zapis narotovanu predlohu
-		mov	m,a
-		inx	h
-		mov	a,b
-		ora	m
-		mov	m,a
-		inx	h
-		mov	a,c
-		ora	m
-		mov	m,a
-		pop	d		; obnov adresu predlohy
-		lxi	b,-(2+SVO)	; posun adresu VO na predchadzajuci
-		dad	b		; mikroriadok
-		pop	b		; obnov pocitadlo vysky
-		dcr	c		; opakuj pre celu vysku
-		jnz	DrawSprite2L
+		rra			; odrotuj predlohu dolava
+		ld d,a
+		ld a,b
+		rra
+		ld b,a
+		ld a,c
+		rra
+		ld c,a
+		ld a,d
+		rra
+		ld d,a
+		ld a,b
+		rra
+		ld b,a
+		ld a,c
+		rra
+		ld c,a
+		pop hl		; obnov adresu VO
+		ld a,d		; odrotuj predlohu dolava este raz
+		or (HL)		; zapis narotovanu predlohu
+		ld (HL),a
+		inc hl
+		ld a,b
+		or (HL)
+		ld (HL),a
+		inc hl
+		ld a,c
+		or (HL)
+		ld (HL),a
+		pop de		; obnov adresu predlohy
+		ld bc,-(2+SVO)	; posun adresu VO na predchadzajuci
+		add HL,bc		; mikroriadok
+		pop bc		; obnov pocitadlo vysky
+		dec c		; opakuj pre celu vysku
+		jp NZ,DrawSprite2L
 		ret
 
 ;------------------------------------------------------------------------------
@@ -277,96 +277,96 @@ DrawSprite2L:	push	b
 ; I: DE=adresa dat spritu, HL=adresa VO
 ; O: -
 ; M: AF, C, DE, HL
-DrawSprite4:	mvi	c,24		; vyska spritu 24 bodov
-DrawSprite4L:	push	b
-		push	h		; odpamataj adresu VO
-		xchg			; predloha do HL
-		mov	b,m		; jeden riadok masky do BCD
-		inx	h
-		mov	c,m
-		inx	h
-		mov	a,m
-		inx	h
-		xthl			; odpamataj adresu predlohy
-		push	h		; aj adresu VO
+DrawSprite4:	ld c,24; vyska spritu 24 bodov
+DrawSprite4L:	push bc
+		push hl		; odpamataj adresu VO
+		ex DE,HL			; predloha do HL
+		ld b,(HL)		; jeden riadok masky do BCD
+		inc hl
+		ld c,(HL)
+		inc hl
+		ld a,(HL)
+		inc hl
+		ex (SP),HL			; odpamataj adresu predlohy
+		push hl		; aj adresu VO
 ;		stc			; zprava vstupi do masky jednotka
-		ral			; odrotuj masku doprava
-		mov	d,a
-		mov	a,c
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		mov	a,c
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		pop	h		; obnov adresu VO
-		mov	a,b
-		ana	m
-		mov	m,a
-		inx	h
-		mov	a,c
-		ana	m
-		mov	m,a
-		inx	h
-		mov	a,d
-		ana	m
-		mov	m,a
-		dcx	h
-		dcx	h
-		xthl			; adresa predlohy do HL
-		mov	b,m		; jeden riadok predlohy do BCD
-		inx	h
-		mov	c,m
-		inx	h
-		mov	a,m
-		inx	h
-		xthl			; odpamataj adresu predlohy
-		push	h		; aj adresu VO
+		rla			; odrotuj masku doprava
+		ld d,a
+		ld a,c
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		ld a,c
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		pop hl		; obnov adresu VO
+		ld a,b
+		and (HL)
+		ld (HL),a
+		inc hl
+		ld a,c
+		and (HL)
+		ld (HL),a
+		inc hl
+		ld a,d
+		and (HL)
+		ld (HL),a
+		dec hl
+		dec hl
+		ex (SP),HL			; adresa predlohy do HL
+		ld b,(HL)		; jeden riadok predlohy do BCD
+		inc hl
+		ld c,(HL)
+		inc hl
+		ld a,(HL)
+		inc hl
+		ex (SP),HL			; odpamataj adresu predlohy
+		push hl		; aj adresu VO
 ;		ora	a		; zprava vstupi do predlohy nula
-		ral			; odrotuj predlohu doprava
-		mov	d,a
-		mov	a,c
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
+		rla			; odrotuj predlohu doprava
+		ld d,a
+		ld a,c
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
 ;		ora	a		; zprava vstupi do predlohy nula
-		mov	a,d		; odrotuj masku doprava este raz
-		ral
-		mov	d,a
-		mov	a,c
-		ral
-		mov	c,a
-		mov	a,b
-		ral
+		ld a,d		; odrotuj masku doprava este raz
+		rla
+		ld d,a
+		ld a,c
+		rla
+		ld c,a
+		ld a,b
+		rla
 ;		mov	b,a
-		pop	h		; obnov adresu HL
+		pop hl		; obnov adresu HL
 ;		mov	a,c		; uloz narotovanu predlohu
-		ora	m
-		mov	m,a
-		inx	h
-		mov	a,c
-		ora	m
-		mov	m,a
-		inx	h
-		mov	a,d
-		ora	m
-		mov	m,a
-		pop	d		; obnov adresu predlohy
-		lxi	b,-(2+SVO)	; posun adresu VO na predchadzajuci
-		dad	b		; mikroriadok
-		pop	b		; obnov pocitadlo vysky
-		dcr	c		; opakuj pre celu vysku
-		jnz	DrawSprite4L
+		or (HL)
+		ld (HL),a
+		inc hl
+		ld a,c
+		or (HL)
+		ld (HL),a
+		inc hl
+		ld a,d
+		or (HL)
+		ld (HL),a
+		pop de		; obnov adresu predlohy
+		ld bc,-(2+SVO)	; posun adresu VO na predchadzajuci
+		add HL,bc		; mikroriadok
+		pop bc		; obnov pocitadlo vysky
+		dec c		; opakuj pre celu vysku
+		jp NZ,DrawSprite4L
 		ret
 
 ;------------------------------------------------------------------------------
@@ -374,389 +374,389 @@ DrawSprite4L:	push	b
 ; I: DE=adresa dat spritu, HL=adresa VO
 ; O: -
 ; M: A, C, DE, HL
-DrawSprite6:	mvi	c,24		; vyska spritu 24 bodov
-DrawSprite6L:	push	b
-		push	h		; odpamataj adresu VO
-		xchg			; predloha do HL
-		mov	a,m		; jeden riadok masky do DBC
-		inx	h
-		mov	b,m
-		inx	h
-		mov	d,m
-		inx	h
-		xthl			; odpamataj adresu predlohy
-		push	h		; aj adresu VO
+DrawSprite6:	ld c,24; vyska spritu 24 bodov
+DrawSprite6L:	push bc
+		push hl		; odpamataj adresu VO
+		ex DE,HL			; predloha do HL
+		ld a,(HL)		; jeden riadok masky do DBC
+		inc hl
+		ld b,(HL)
+		inc hl
+		ld d,(HL)
+		inc hl
+		ex (SP),HL			; odpamataj adresu predlohy
+		push hl		; aj adresu VO
 ;		ori	0C0h		; zlava vstupia do masky jednotky
-		ral			; 1 - odrotuj masku dolava
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		mov	a,c		; 2
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		mov	a,c		; 3
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		mov	a,c		; 4
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		pop	h		; adresa VO do HL
-		mov	a,d		; get 1st mask byte
-		ana	m		; aplikuj narotovanu masku
-		mov	m,a
-		inx	h
-		mov	a,b
-		ana	m
-		mov	m,a
-		inx	h
-		mov	a,c
-		ana	m
-		mov	m,a
-		dcx	h
-		dcx	h
-		xthl			; adresa predlohy do HL
-		mov	a,m		; jeden riadok predlohy do DBC
-		inx	h
-		mov	b,m
-		inx	h
-		mov	c,m
-		inx	h
-		xthl			; odpamataj adresu predlohy
-		push	h		; aj adresu VO
+		rla			; 1 - odrotuj masku dolava
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		ld a,c		; 2
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		ld a,c		; 3
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		ld a,c		; 4
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		pop hl		; adresa VO do HL
+		ld a,d		; get 1st mask byte
+		and (HL)		; aplikuj narotovanu masku
+		ld (HL),a
+		inc hl
+		ld a,b
+		and (HL)
+		ld (HL),a
+		inc hl
+		ld a,c
+		and (HL)
+		ld (HL),a
+		dec hl
+		dec hl
+		ex (SP),HL			; adresa predlohy do HL
+		ld a,(HL)		; jeden riadok predlohy do DBC
+		inc hl
+		ld b,(HL)
+		inc hl
+		ld c,(HL)
+		inc hl
+		ex (SP),HL			; odpamataj adresu predlohy
+		push hl		; aj adresu VO
 ;		ora	a		; zlava vstupi do predlohy nula
-		ral			; 1 - odrotuj predlohu dolava
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		mov	a,c		; 2
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		mov	a,c		; 3
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		mov	a,c		; 4
-		ral
-		mov	c,a
-		mov	a,b
-		ral
-		mov	b,a
-		mov	a,d
-		ral
-		mov	d,a
-		pop	h		; obnov adresu VO
-		mov	a,d		; odrotuj predlohu dolava este raz
-		ora	m		; zapis narotovanu predlohu
-		mov	m,a
-		inx	h
-		mov	a,b
-		ora	m
-		mov	m,a
-		inx	h
-		mov	a,c
-		ora	m
-		mov	m,a
-		pop	d		; obnov adresu predlohy
-		lxi	b,-(2+SVO)	; posun adresu VO na predchadzajuci
-		dad	b		; mikroriadok
-		pop	b		; obnov pocitadlo vysky
-		dcr	c		; opakuj pre celu vysku
-		jnz	DrawSprite2L
+		rla			; 1 - odrotuj predlohu dolava
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		ld a,c		; 2
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		ld a,c		; 3
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		ld a,c		; 4
+		rla
+		ld c,a
+		ld a,b
+		rla
+		ld b,a
+		ld a,d
+		rla
+		ld d,a
+		pop hl		; obnov adresu VO
+		ld a,d		; odrotuj predlohu dolava este raz
+		or (HL)		; zapis narotovanu predlohu
+		ld (HL),a
+		inc hl
+		ld a,b
+		or (HL)
+		ld (HL),a
+		inc hl
+		ld a,c
+		or (HL)
+		ld (HL),a
+		pop de		; obnov adresu predlohy
+		ld bc,-(2+SVO)	; posun adresu VO na predchadzajuci
+		add HL,bc		; mikroriadok
+		pop bc		; obnov pocitadlo vysky
+		dec c		; opakuj pre celu vysku
+		jp NZ,DrawSprite2L
 		ret
 
 ;------------------------------------------------------------------------------
 ; Vykreslenie pripravenych spritov v zozanme do VO2.
-DrawSpr:	lxi	h,SprListOrd	; адрес списка отсортированных спрайтов
-DrawSprA:	mov	a,m		; znacka v zozname
-		ana	a		; конец списка?
-		jz	DrawSprE	; да, назад
-		inx	h		; пропустить отметку
-		mov	e,m		; адрес структуры объекта в DE
-		inx	h
-		mov	d,m
-		inx	h
-		push	h		; odpamataj adresu zoznamu
-		xchg			; адрес структуры в HL
-		inx	h		; (1)
-		inx	h		; (2)
-		inx	h		; (3)
-		mov	c,m
-		inx	h		; (4)
-		mov	b,m		; смещение спрайта в зоне в BC
-		inx	h		; (5)
-		mov	e,m		; aktualny offset na zoznam adries spritov do E
-		mvi	a,4
-		add	l
-		mov	l,a		; {9}
+DrawSpr:	ld hl,SprListOrd; адрес списка отсортированных спрайтов
+DrawSprA:	ld a,(HL); znacka v zozname
+		and a		; конец списка?
+		jp Z,DrawSprE	; да, назад
+		inc hl		; пропустить отметку
+		ld e,(HL)		; адрес структуры объекта в DE
+		inc hl
+		ld d,(HL)
+		inc hl
+		push hl		; odpamataj adresu zoznamu
+		ex DE,HL			; адрес структуры в HL
+		inc hl		; (1)
+		inc hl		; (2)
+		inc hl		; (3)
+		ld c,(HL)
+		inc hl		; (4)
+		ld b,(HL)		; смещение спрайта в зоне в BC
+		inc hl		; (5)
+		ld e,(HL)		; aktualny offset na zoznam adries spritov do E
+		ld a,4
+		add A,l
+		ld l,a		; {9}
 ;		lda	SprOffStep	; дополнительный сдвиг
 ;		add	m		; pripocitaj typ rutiny { 0, 1, 2 }
-		mov	a,m
+		ld a,(HL)
 ;		cpi	4		; ak je to viac ako 2
-		ani	3
+		and 3
 ;		jc	DrawSprB
 ;		sui	4		; uprav na spravnu hodnotu
 ;		inx	b		; a inkrementuj posun spritu v Zone
-DrawSprB:	mov	d,a		; тип процедуры временно в D
-		inx	h		; {10}
-		mov	l,m		; offset pre urcenie sekvencie spritu
-		mvi	h,Vars/256	; vyssi byte adresy bloku premennych
-		mov	a,m		; sekvencia do A
-		add	e		; pripocitaj aktualny offset na zoznam
-		mov	l,a		;   adries spritov a uloz do L
-		mvi	h,SprAddrs/256	; vyssi byte zoznamu adries spritov do H
-		mov	a,d		; тип процедуры обратно в A
-		mov	e,m		; адрес искомого спрайта в DE
-		inx	h
-		mov	d,m
-		lhld	SprOffZone	; смещение положения спрайта в соответствии с зоной
-		dad	b		; HL=адрес назначения vo VO2
-		mov	c,a		; запомнить тип процедуры
-		mov	a,h		; спрайт находится в области VO2?
-		cpi	InnerScr2/256
-		jc	DrawSprD	; нет, пропустить рисование
-		push	h		; адрес назначения vo VO2 na zasobnik
-		push	h		; a este raz
-		mov	a,c
-		add	a		; тип процедуры *2
-		add	a		; *4
-		add	a		; *8
-		mov	c,a
-		mvi	b,0
-		lxi	h,DrawSprR	; находим правильный адрес процедуры
-		dad	b		; в HL
-		pop	b		; адрес назначения VO2 в BC
-		pchl			; косвенный переход на процедуру рисования спрайта
+DrawSprB:	ld d,a; тип процедуры временно в D
+		inc hl		; {10}
+		ld l,(HL)		; offset pre urcenie sekvencie spritu
+		ld h,Vars/256	; vyssi byte adresy bloku premennych
+		ld a,(HL)		; sekvencia do A
+		add A,e		; pripocitaj aktualny offset na zoznam
+		ld l,a		;   adries spritov a uloz do L
+		ld h,SprAddrs/256	; vyssi byte zoznamu adries spritov do H
+		ld a,d		; тип процедуры обратно в A
+		ld e,(HL)		; адрес искомого спрайта в DE
+		inc hl
+		ld d,(HL)
+		ld HL,(SprOffZone)	; смещение положения спрайта в соответствии с зоной
+		add HL,bc		; HL=адрес назначения vo VO2
+		ld c,a		; запомнить тип процедуры
+		ld a,h		; спрайт находится в области VO2?
+		cp InnerScr2/256
+		jp C,DrawSprD	; нет, пропустить рисование
+		push hl		; адрес назначения vo VO2 na zasobnik
+		push hl		; a este raz
+		ld a,c
+		add A,a		; тип процедуры *2
+		add A,a		; *4
+		add A,a		; *8
+		ld c,a
+		ld b,0
+		ld hl,DrawSprR	; находим правильный адрес процедуры
+		add HL,bc		; в HL
+		pop bc		; адрес назначения VO2 в BC
+		jp (HL)			; косвенный переход на процедуру рисования спрайта
 ;
 ; Отображение спрайта 4x24 с правильным смещением; здесь четыре блока кода по 8 байт
 ; I: DE=адрес данных спрайта, BC=адрес назначения
 DrawSprR:	; тип процедуры 0
-		mov	l,c
-		mov	h,b
-		call	DrawSprite4	; рисование спрайта
-		jmp	DrawSprC	; идём дальше
+		ld l,c
+		ld h,b
+		call DrawSprite4	; рисование спрайта
+		jp DrawSprC	; идём дальше
 		; тип процедуры 1
-		mov	l,c
-		mov	h,b
-		call	DrawSprite0	; рисование спрайта
-		jmp	DrawSprC	; идём дальше
+		ld l,c
+		ld h,b
+		call DrawSprite0	; рисование спрайта
+		jp DrawSprC	; идём дальше
 		; тип процедуры 2
-		mov	l,c
-		mov	h,b
-		call	DrawSprite2	; рисование спрайта
-		jmp	DrawSprC	; идём дальше
+		ld l,c
+		ld h,b
+		call DrawSprite2	; рисование спрайта
+		jp DrawSprC	; идём дальше
 		; тип процедуры 3
-		mov	l,c
-		mov	h,b
-		call	DrawSprite6
+		ld l,c
+		ld h,b
+		call DrawSprite6
 ;
-DrawSprC:	pop	h		; obnov cielovu adresu vo VO2
-		mvi	a,2		; znacka
-		mvi	c,4		; 4 bloky na vysku
-		call	MarkBlocks	; oznac bloky, ktore obsadil sprite
-DrawSprD:	pop	h		; obnov adresu zoznamu
-		jmp	DrawSprA	; dalsi sprite
+DrawSprC:	pop hl; obnov cielovu adresu vo VO2
+		ld a,2		; znacka
+		ld c,4		; 4 bloky na vysku
+		call MarkBlocks	; oznac bloky, ktore obsadil sprite
+DrawSprD:	pop hl; obnov adresu zoznamu
+		jp DrawSprA	; dalsi sprite
 
 ; po vykresleni spritov este male upravy
 
 ; Prejdi lave tri znakove stlpce zaciatku drahy a hladaj znacku nakresleneho
 ; spritu v dalsom riadku bloku.
 ; Tieto znacky su pridane pri kresleni spritu na pravom kraji drahy.
-DrawSprE:	lxi	d,MarkBuff+(9*SVO)
-		lxi	h,MarkBuff+(10*SVO)
-		lxi	b,7
-DrawSprF:	mvi	a,2
-		cmp	m		; je tu znacka?
-		jnz	DrawSprG	; nie, skoc dalej
-		stax	d		; o riadok vyssie daj znacku tiez
-DrawSprG:	inx	h
-		inx	d
-		cmp	m		; je tu znacka?
-		jnz	DrawSprH	; nie, skoc dalej
-		stax	d		; o riadok vyssie daj znacku tiez
-DrawSprH:	inx	h
-		inx	d
-		cmp	m		; je tu znacka?
-		jnz	DrawSprI	; nie, skoc dalej
-		stax	d		; o riadok vyssie daj znacku tiez
-DrawSprI:	mov	a,c
-		mvi	c,SVO-2
-		dad	b
-		xchg
-		dad	b
-		xchg
-		mov	c,a
-		dcr	c
-		jnz	DrawSprF
+DrawSprE:	ld de,MarkBuff+(9*SVO)
+		ld hl,MarkBuff+(10*SVO)
+		ld bc,7
+DrawSprF:	ld a,2
+		cp (HL)		; je tu znacka?
+		jp NZ,DrawSprG	; nie, skoc dalej
+		ld (de),A		; o riadok vyssie daj znacku tiez
+DrawSprG:	inc hl
+		inc de
+		cp (HL)		; je tu znacka?
+		jp NZ,DrawSprH	; nie, skoc dalej
+		ld (de),A		; o riadok vyssie daj znacku tiez
+DrawSprH:	inc hl
+		inc de
+		cp (HL)		; je tu znacka?
+		jp NZ,DrawSprI	; nie, skoc dalej
+		ld (de),A		; o riadok vyssie daj znacku tiez
+DrawSprI:	ld a,c
+		ld c,SVO-2
+		add HL,bc
+		ex DE,HL
+		add HL,bc
+		ex DE,HL
+		ld c,a
+		dec c
+		jp NZ,DrawSprF
 
-		lxi	h,InnerScr2+SVO-1 ; vymaz 2 pixely v poslednom stlpci VO
-		lxi	d,SVO
-		lxi	b,HILO(50,0Fh)
-DrawSprJ:	mov	a,m
-		ana	c
-		mov	m,a
-		dad	d
-		dcr	b
-		jnz	DrawSprJ
+		ld hl,InnerScr2+SVO-1 ; vymaz 2 pixely v poslednom stlpci VO
+		ld de,SVO
+		ld bc, (50<<8)|0Fh
+DrawSprJ:	ld a,(HL)
+		and c
+		ld (HL),a
+		add HL,de
+		dec b
+		jp NZ,DrawSprJ
 		ret
 
 ;------------------------------------------------------------------------------
-DrawRough:	lxi	h,RoughAdrs	; inicializuj adresu zoznamu cielovych
-		shld	DrawRoughE+1	; adries VO2 kam budu vykreslene sprity
-		mvi	m,0
-		lxi	h,SprPrepList	; zoznam pripravenych spritov
-DrawRoughA:	mov	a,m		; (0) vezmi Y poziciu spritu
-		cpi	0FEh		; это неактивный объект?
-		jz	DrawRoughD	; да, идём дальше
-		jnc	DrawRoughF	; koniec zoznamu, skoc dalej
-		push	h		; odpamataj adresu struktury
-		mvi	a,6		; posun ukazatela na typ spritu
-		add	l
-		mov	l,a
-		mov	a,m		; (6) тип спрайта
-		cpi	16h		; je to drsny povrch?
-		jnz	DrawRoughC	; nie, prejdi na dalsi sprite
-		mvi	a,-5		; posun ukazatela na X poziciu spritu
-		add	l
-		mov	l,a
-		mov	c,m		; (1)
-		inx	h
-		mov	b,m		; (2) pozicia spritu do BC
-		xchg
-		lhld	ZonePosQ	; pozicia zony do HL
-		call	SubBCHL		; porovnaj, ci je sprite v aktualnej zone
-		jnz	DrawRoughC	; nie je, prejdi na dalsi sprite
-		xchg
-		inx	h
-		mov	c,m		; (3)
-		inx	h
-		mov	b,m		; (4) posun spritu v Zone do BC
-		xchg
-		lhld	SprOffZone	; offset pozicie spritov podla zony
-		dad	b		; HL=адрес назначения vo VO2
-		mov	a,h		; ak je cely sprite mimo VO2 (pred VO2)
-		cpi	InnerScr2/256
-		jc	DrawRoughC	; vynechaj ho
-		mov	c,l		; адрес назначения в BC
-		mov	b,h
-		xchg
-		mvi	a,5		; posun ukazatela na typ rutiny
-		add	l
-		mov	l,a		; (9) тип процедуры
-		mov	a,m
-		ani	3
-DrawRoughE:	lxi	h,0		; adresa zoznamu adries VO2
-		mvi	d,0		; D=0; koncova znacka
-		mov	m,b		; uloz adresu cielovu adresu CO2
-		inx	h		; do zoznamu - zamerne najprv vyssi byte!
-		mov	m,c
-		inx	h
-		mov	m,d		; koncova znacka
-		shld	DrawRoughE+1	; uloz novy ukazatel
-		add	a		; тип процедуры *2
-		mov	e,a
-		add	a		; *4
-		add	a		; *8
-		add	e		; *10
-		mov	e,a
-		lxi	h,DrawRoughB	; najdi spravnu adresu rutiny
-		dad	d		; do HL
-M256S5:		lxi	d,SprRough	; adresa spritu - drsny povrch
-		pchl			; skoc nepriamo vykreslit sprite
+DrawRough:	ld hl,RoughAdrs; inicializuj adresu zoznamu cielovych
+		ld (DrawRoughE+1),HL	; adries VO2 kam budu vykreslene sprity
+		ld (HL),0
+		ld hl,SprPrepList	; zoznam pripravenych spritov
+DrawRoughA:	ld a,(HL); (0) vezmi Y poziciu spritu
+		cp 0FEh		; это неактивный объект?
+		jp Z,DrawRoughD	; да, идём дальше
+		jp NC,DrawRoughF	; koniec zoznamu, skoc dalej
+		push hl		; odpamataj adresu struktury
+		ld a,6		; posun ukazatela na typ spritu
+		add A,l
+		ld l,a
+		ld a,(HL)		; (6) тип спрайта
+		cp 16h		; je to drsny povrch?
+		jp NZ,DrawRoughC	; nie, prejdi na dalsi sprite
+		ld a,-5		; posun ukazatela na X poziciu spritu
+		add A,l
+		ld l,a
+		ld c,(HL)		; (1)
+		inc hl
+		ld b,(HL)		; (2) pozicia spritu do BC
+		ex DE,HL
+		ld HL,(ZonePosQ)	; pozicia zony do HL
+		call SubBCHL		; porovnaj, ci je sprite v aktualnej zone
+		jp NZ,DrawRoughC	; nie je, prejdi na dalsi sprite
+		ex DE,HL
+		inc hl
+		ld c,(HL)		; (3)
+		inc hl
+		ld b,(HL)		; (4) posun spritu v Zone do BC
+		ex DE,HL
+		ld HL,(SprOffZone)	; offset pozicie spritov podla zony
+		add HL,bc		; HL=адрес назначения vo VO2
+		ld a,h		; ak je cely sprite mimo VO2 (pred VO2)
+		cp InnerScr2/256
+		jp C,DrawRoughC	; vynechaj ho
+		ld c,l		; адрес назначения в BC
+		ld b,h
+		ex DE,HL
+		ld a,5		; posun ukazatela na typ rutiny
+		add A,l
+		ld l,a		; (9) тип процедуры
+		ld a,(HL)
+		and 3
+DrawRoughE:	ld hl,0; adresa zoznamu adries VO2
+		ld d,0		; D=0; koncova znacka
+		ld (HL),b		; uloz adresu cielovu adresu CO2
+		inc hl		; do zoznamu - zamerne najprv vyssi byte!
+		ld (HL),c
+		inc hl
+		ld (HL),d		; koncova znacka
+		ld (DrawRoughE+1),HL	; uloz novy ukazatel
+		add A,a		; тип процедуры *2
+		ld e,a
+		add A,a		; *4
+		add A,a		; *8
+		add A,e		; *10
+		ld e,a
+		ld hl,DrawRoughB	; najdi spravnu adresu rutiny
+		add HL,de		; do HL
+M256S5:		ld de,SprRough; adresa spritu - drsny povrch
+		jp (HL)			; skoc nepriamo vykreslit sprite
 ;
 ; Отображение спрайта с правильным смещением; здесь четыре блока кода по 10 байт
 ; I: DE=адрес данных спрайта, BC=адрес назначения
 DrawRoughB:	; typ rutiny 0
-		mov	l,c
-		mov	h,b
-		mvi	c,7		; vyska 7 bodov
-M256R2B:	call	DrawSprite6L	; vykreslenie spritu narotovaneho o 2 body dolava
-		jmp	DrawRoughC	; skoc dalej
+		ld l,c
+		ld h,b
+		ld c,7		; vyska 7 bodov
+M256R2B:	call DrawSprite6L; vykreslenie spritu narotovaneho o 2 body dolava
+		jp DrawRoughC	; skoc dalej
 		; typ rutiny 1
-		mov	l,c
-		mov	h,b
-		mvi	c,7		; vyska 7 bodov
-M256R0B:	call	DrawSprite4L	; vykreslenie spritu bez posunutia
-		jmp	DrawRoughC	; skoc dalej
+		ld l,c
+		ld h,b
+		ld c,7		; vyska 7 bodov
+M256R0B:	call DrawSprite4L; vykreslenie spritu bez posunutia
+		jp DrawRoughC	; skoc dalej
 		; typ rutiny 2
-		mov	l,c
-		mov	h,b
-		mvi	c,7		; vyska 7 bodov
-M256R4B:	call	DrawSprite0L	; vykreslenie spritu narotovaneho o 2 body doprava
-		jmp	DrawRoughC	; skoc dalej
+		ld l,c
+		ld h,b
+		ld c,7		; vyska 7 bodov
+M256R4B:	call DrawSprite0L; vykreslenie spritu narotovaneho o 2 body doprava
+		jp DrawRoughC	; skoc dalej
 		; typ rutiny 3
-		mov	l,c
-		mov	h,b
-		mvi	c,7		; vyska 7 bodov
-		call	DrawSprite2L
+		ld l,c
+		ld h,b
+		ld c,7		; vyska 7 bodov
+		call DrawSprite2L
 
-DrawRoughC:	pop	h		; adresu struktury spritu
-DrawRoughD:	lxi	d,16
-		dad	d
-		jmp	DrawRoughA
+DrawRoughC:	pop hl; adresu struktury spritu
+DrawRoughD:	ld de,16
+		add HL,de
+		jp DrawRoughA
 
-DrawRoughF:	lda	RoughAdrs	; ak neboli vykrelsene ziadne sprity,
-		ora	a
-		rz			; hned sa vrat
+DrawRoughF:	ld A,(RoughAdrs); ak neboli vykrelsene ziadne sprity,
+		or a
+		ret Z			; hned sa vrat
 
 		; prekopiruj VO2 do VO
-		mvi	l,VVO
-		lxi	d,InnerScr2
-		lxi	b,InnerScr
-		call	CopyInnerBuf
+		ld l,VVO
+		ld de,InnerScr2
+		ld bc,InnerScr
+		call CopyInnerBuf
 
 		; vytvor znacky blokov kam sa vykreslili sprity
-		lxi	h,RoughAdrs	; zoznam adries
-DrawRoughM:	mov	a,m		; vezmi vyssi byte
-		ora	a		; koniec zoznamu?
-		rz			; ano, konecne navrat
-		mov	d,a
-		inx	h
-		mov	e,m		; adresa VO2 do DE
-		inx	h
-		push	h		; adresa zoznamu na zasobnik
-		xchg			; adresa VO2 do HL
-		mvi	a,1		; znacka
-		mvi	c,3		; 3 bloky na vysku
-		call	MarkBlocks	; oznac bloky, ktore obsadil sprite
-		pop	h
-		jmp	DrawRoughM
+		ld hl,RoughAdrs	; zoznam adries
+DrawRoughM:	ld a,(HL); vezmi vyssi byte
+		or a		; koniec zoznamu?
+		ret Z			; ano, konecne navrat
+		ld d,a
+		inc hl
+		ld e,(HL)		; adresa VO2 do DE
+		inc hl
+		push hl		; adresa zoznamu na zasobnik
+		ex DE,HL			; adresa VO2 do HL
+		ld a,1		; znacka
+		ld c,3		; 3 bloky na vysku
+		call MarkBlocks	; oznac bloky, ktore obsadil sprite
+		pop hl
+		jp DrawRoughM
 
 ;------------------------------------------------------------------------------
 ; Oznaci "Bloky", pod ktorymi sa nachadza vykresleny sprite.
@@ -764,40 +764,40 @@ DrawRoughM:	mov	a,m		; vezmi vyssi byte
 ; I: HL=adresa vo VO2, A=znacka, C=pocet blokov na vysku
 ; O: -
 ; M: все
-MarkBlocks:	sta	MarkBlocksM+1	; uloz znacku
-		lxi	d,InnerScr2	; odpocitaj bazovu adresu VO2
-		call	SubHLDE		; HL=offset od zaciatku VO2
-		rc
-MarkBlocksX:	mvi	d,SVO		; vydel sirkou mikroriadku VO
-		call	Div16x8		; HL=mikroriadok <0,143>, A=stlpec <0,31>
-		mov	b,a		; stlpec do B
-		mov	a,l
-		ani	0F8h
-		mov	l,a		; HL=INT(HL/8)*8 - vyska bloku 8 mikroriadkov
-		rrc
-		rrc
-		rrc
-		mov	d,h		; DE=HL/8
-		mov	e,a
-		mov	e,l		; *8 do DE
-		dad	h		; *16
-		dad	h		; *32
-		mov	e,b		; DE=stlpec
-		dad	d		; +stlpec
-		lxi	d,MarkBuff
-		dad	d		; HL=адрес назначения pre znacky
-MarkBlocksY:	lxi	d,-(3+SVO)	; offset na predchadzajuci riadok
-MarkBlocksM:	mvi	b,0		; znacka
-MarkBlocksL:	mov	m,b		; uloz 4 znacky v jednom riadku blokov
-		inx	h
-		mov	m,b
-		inx	h
-		mov	m,b
-		inx	h
-		mov	m,b
-		dad	d		; prejdi na predchadzajuci riadok
-		dcr	c
-		jnz	MarkBlocksL	; opakuj
+MarkBlocks:	ld (MarkBlocksM+1),A; uloz znacku
+		ld de,InnerScr2	; odpocitaj bazovu adresu VO2
+		call SubHLDE		; HL=offset od zaciatku VO2
+		ret C
+MarkBlocksX:	ld d,SVO; vydel sirkou mikroriadku VO
+		call Div16x8		; HL=mikroriadok <0,143>, A=stlpec <0,31>
+		ld b,a		; stlpec do B
+		ld a,l
+		and 0F8h
+		ld l,a		; HL=INT(HL/8)*8 - vyska bloku 8 mikroriadkov
+		rrca
+		rrca
+		rrca
+		ld d,h		; DE=HL/8
+		ld e,a
+		ld e,l		; *8 do DE
+		add HL,hl		; *16
+		add HL,hl		; *32
+		ld e,b		; DE=stlpec
+		add HL,de		; +stlpec
+		ld de,MarkBuff
+		add HL,de		; HL=адрес назначения pre znacky
+MarkBlocksY:	ld de,-(3+SVO); offset na predchadzajuci riadok
+MarkBlocksM:	ld b,0; znacka
+MarkBlocksL:	ld (HL),b; uloz 4 znacky v jednom riadku blokov
+		inc hl
+		ld (HL),b
+		inc hl
+		ld (HL),b
+		inc hl
+		ld (HL),b
+		add HL,de		; prejdi na predchadzajuci riadok
+		dec c
+		jp NZ,MarkBlocksL	; opakuj
 		ret
 
 ;------------------------------------------------------------------------------
@@ -805,160 +805,160 @@ MarkBlocksL:	mov	m,b		; uloz 4 znacky v jednom riadku blokov
 ; Zmazanie spritov z VO2.
 ; Prakticky sa do VO2 nakopiruje obsah z VO1 v miestach, kde boli sprity
 ; vykreslene.
-UndrawSpr:	lxi	h,SprListOrd	; zoznam zoradenych spritov
-UndrawSprA:	mov	a,m 
-		ana	a		; koniec zoznamu?
-		rz			; ano, navrat
-		inx	h		; preskoc znacku
-		mov	e,m		; adresa struktury spritu do DE
-		inx	h
-		mov	d,m
-		inx	h
-		push	h		; adresa zoznamu na zasobnik
-		xchg			; adresa struktury spritu do HL
-		inx	h		; (1)
-		inx	h		; (2)
-		inx	h		; (3)
-		mov	c,m
-		inx	h		; (4)
-		mov	b,m		; pozicia spritu vo VO2 do BC
-		xchg
-		lhld	SprOffZone	; offset pozicie spritov podla zony
-		dad	b		; pripocitaj
-		mov	a,h		; ak je cely sprite mimo VO2 (pred VO2)
-		cpi	InnerScr2/256
-		jc	UndrawSprD	; vynechaj ho
-		mov	c,l		; адрес назначения do BC
-		mov	b,h
-		xchg
-		mvi	a,5		; posun ukazatela na typ rutiny
-		add	l
-		mov	l,a		; (9) typ rutiny
+UndrawSpr:	ld hl,SprListOrd; zoznam zoradenych spritov
+UndrawSprA:	ld a,(HL)
+		and a		; koniec zoznamu?
+		ret Z			; ano, navrat
+		inc hl		; preskoc znacku
+		ld e,(HL)		; adresa struktury spritu do DE
+		inc hl
+		ld d,(HL)
+		inc hl
+		push hl		; adresa zoznamu na zasobnik
+		ex DE,HL			; adresa struktury spritu do HL
+		inc hl		; (1)
+		inc hl		; (2)
+		inc hl		; (3)
+		ld c,(HL)
+		inc hl		; (4)
+		ld b,(HL)		; pozicia spritu vo VO2 do BC
+		ex DE,HL
+		ld HL,(SprOffZone)	; offset pozicie spritov podla zony
+		add HL,bc		; pripocitaj
+		ld a,h		; ak je cely sprite mimo VO2 (pred VO2)
+		cp InnerScr2/256
+		jp C,UndrawSprD	; vynechaj ho
+		ld c,l		; адрес назначения do BC
+		ld b,h
+		ex DE,HL
+		ld a,5		; posun ukazatela na typ rutiny
+		add A,l
+		ld l,a		; (9) typ rutiny
 ;		lda	SprOffStep	; kroky naviac
 ;		add	m		; pripocitaj typ rutiny { 0, 1, 2 }
 ;		cpi	3		; ak je to viac ako 2
 ;		jc	UndrawSprB
 ;		sui	3		; uprav na spravnu hodnotu
 ;		inx	b		; a posun cielovu adresu
-UndrawSprB:	mov	e,c		; a uloz do DE
-		mov	d,b
-		lxi	h,InnerScr-InnerScr2 ; offset pre navrat na VO1
-		dad	b		; HL=pozicia spritu vo VO1
+UndrawSprB:	ld e,c; a uloz do DE
+		ld d,b
+		ld hl,InnerScr-InnerScr2 ; offset pre navrat na VO1
+		add HL,bc		; HL=pozicia spritu vo VO1
 
-		lxi	b,HILO(255,24)	; vyska spritu 24
-UndrawSprC:	mov	a,m		; prekopiruj jeden riadok
-		stax	d		; pod spritom z VO1 do VO2
-		inx	h
-		inx	d
-		mov	a,m
-		stax	d
-		inx	h
-		inx	d
-		mov	a,m
-		stax	d
-		inx	h
-		inx	d
-		mov	a,m
-		stax	d
-		mov	a,c
-		mvi	c,-(3+SVO)	; presun na predosly mikroriadok
-		dad	b		; vo VO1
-		xchg
-		dad	b		; vo VO2
-		xchg
-		mov	c,a
-		dcr	c
-		jnz	UndrawSprC
-UndrawSprD:	pop	h		; obnov adresu zoznamu
-		jmp	UndrawSprA	; pokracuj dalsim spritom
+		ld bc, (255<<8)|24
+UndrawSprC:	ld a,(HL); prekopiruj jeden riadok
+		ld (de),A		; pod spritom z VO1 do VO2
+		inc hl
+		inc de
+		ld a,(HL)
+		ld (de),A
+		inc hl
+		inc de
+		ld a,(HL)
+		ld (de),A
+		inc hl
+		inc de
+		ld a,(HL)
+		ld (de),A
+		ld a,c
+		ld c,-(3+SVO)	; presun na predosly mikroriadok
+		add HL,bc		; vo VO1
+		ex DE,HL
+		add HL,bc		; vo VO2
+		ex DE,HL
+		ld c,a
+		dec c
+		jp NZ,UndrawSprC
+UndrawSprD:	pop hl; obnov adresu zoznamu
+		jp UndrawSprA	; pokracuj dalsim spritom
 
 ;------------------------------------------------------------------------------
 ; Перерисовать изменения без прерываний
 RedrawChangesDI:
 		di
-		call	RedrawChanges
+		call RedrawChanges
 		ei
 		ret
 
 ; Перерисовать изменения
 RedrawChanges:
-		lxi	h,RedrawList	; zoznam adries pre aplikovanie zmien
-RedrawChangesA:	mov	a,m		; ширина в A
-		ora	a
-		rz
-		inx	h
-		mov	e,m		; адрес VO2 в DE
-		inx	h
-		mov	d,m
-		inx	h
-		push	d		; a na zasobnik
-		mov	e,m		; адрес VRAM в DE
-		inx	h
-		mov	d,m
-		inx	h
-		mov	c,m		; adresa flagov zmien (vo VO1) do BC
-		inx	h
-		mov	b,m
-		inx	h
-		xthl			; HL=VO2, DE=VRAM, BC=флаги
-RedrawChangesB:	push	psw		; sirka na zasobnik
-		ldax	b		; берём флаг
-		dcr	a		; нужна перерисовка?
-		jm	RedrawChangesC	; нет, переходим
-		stax	b		; a uloz novu hodnotu
-		push	b		; сохраняем адрес флагов
-		lxi	b,SVO		; смещение к следующей микро-строке в VO2
+		ld hl,RedrawList	; zoznam adries pre aplikovanie zmien
+RedrawChangesA:	ld a,(HL); ширина в A
+		or a
+		ret Z
+		inc hl
+		ld e,(HL)		; адрес VO2 в DE
+		inc hl
+		ld d,(HL)
+		inc hl
+		push de		; a na zasobnik
+		ld e,(HL)		; адрес VRAM в DE
+		inc hl
+		ld d,(HL)
+		inc hl
+		ld c,(HL)		; adresa flagov zmien (vo VO1) do BC
+		inc hl
+		ld b,(HL)
+		inc hl
+		ex (SP),HL			; HL=VO2, DE=VRAM, BC=флаги
+RedrawChangesB:	push af; sirka na zasobnik
+		ld A,(bc)		; берём флаг
+		dec a		; нужна перерисовка?
+		jp M,RedrawChangesC	; нет, переходим
+		ld (bc),A		; a uloz novu hodnotu
+		push bc		; сохраняем адрес флагов
+		ld bc,SVO		; смещение к следующей микро-строке в VO2
 ;
-		mov	a,m		; байт из VO2
-		stax	d		; пишем в VRAM
-		dad	b		; сдвигаем на микро-строку в VO2
-		dcr	e		; сдвигаем на микро-строку в VRAM
-		mov	a,m
-		stax	d		; 2
-		dad	b
-		dcr	e
-		mov	a,m
-		stax	d		; 3
-		dad	b
-		dcr	e
-		mov	a,m
-		stax	d		; 4
-		dad	b
-		dcr	e
-		mov	a,m
-		stax	d		; 5
-		dad	b
-		dcr	e
-		mov	a,m
-		stax	d		; 6
-		dad	b
-		dcr	e
-		mov	a,m
-		stax	d		; 7
-		dad	b
-		dcr	e
-		mov	a,m
-		stax	d		; 8
+		ld a,(HL)		; байт из VO2
+		ld (de),A		; пишем в VRAM
+		add HL,bc		; сдвигаем на микро-строку в VO2
+		dec e		; сдвигаем на микро-строку в VRAM
+		ld a,(HL)
+		ld (de),A		; 2
+		add HL,bc
+		dec e
+		ld a,(HL)
+		ld (de),A		; 3
+		add HL,bc
+		dec e
+		ld a,(HL)
+		ld (de),A		; 4
+		add HL,bc
+		dec e
+		ld a,(HL)
+		ld (de),A		; 5
+		add HL,bc
+		dec e
+		ld a,(HL)
+		ld (de),A		; 6
+		add HL,bc
+		dec e
+		ld a,(HL)
+		ld (de),A		; 7
+		add HL,bc
+		dec e
+		ld a,(HL)
+		ld (de),A		; 8
 ;
-		lxi	b,-(7*SVO)	; adresa VO2 na povodnu hodnotu
-		dad	b
-		mov	a,e
-		adi	7
-		mov	e,a		; vyssi byte VRAM na povodnu hodnotu
-		pop	b		; obnov adresu flagov
-RedrawChangesC:	dcx	h		; posun na znakovu poziciu do prava
+		ld bc,-(7*SVO)	; adresa VO2 na povodnu hodnotu
+		add HL,bc
+		ld a,e
+		add A,7
+		ld e,a		; vyssi byte VRAM na povodnu hodnotu
+		pop bc		; obnov adresu flagov
+RedrawChangesC:	dec hl; posun na znakovu poziciu do prava
 ;		dcr	d		; следующий столбец в VRAM
-		mov	a,d
-		dcr	a
-		ani	01Fh
-		ori	BaseVramAdr/256
-		mov	d,a
-		dcx	b		; следующий байт флагов
-		pop	psw
-		dcr	a		; opakuj pre celu sirku
-		jnz	RedrawChangesB
-		pop	h		; obnov adresu zoznamu
-		jmp	RedrawChangesA	; navrat do slucky
+		ld a,d
+		dec a
+		and 01Fh
+		or BaseVramAdr/256
+		ld d,a
+		dec bc		; следующий байт флагов
+		pop af
+		dec a		; opakuj pre celu sirku
+		jp NZ,RedrawChangesB
+		pop hl		; obnov adresu zoznamu
+		jp RedrawChangesA	; navrat do slucky
 
 ;------------------------------------------------------------------------------
 ; Список адресов, которые перерисовываются справа налево в рамках трека.
@@ -966,41 +966,41 @@ RedrawChangesC:	dcx	h		; posun na znakovu poziciu do prava
 ;   DB ширина в sesticiach,
 ;   DW адрес VO2, адрес VRAM, адрес флагов (MarkBuff)
 RedrawList:	.db	10
-		.dw	InnerScr2+(17*SVO8)+9,BaseVramAdr+HILO(2,(255-19*8)),MarkBuff+(17*SVO)+9
+		.dw	InnerScr2+(17*SVO8)+9,BaseVramAdr+(2<<8)|(255-19*8), MarkBuff+(17*SVO)+9
 		.db	12
-		.dw	InnerScr2+(16*SVO8)+11,BaseVramAdr+HILO(4,(255-18*8)),MarkBuff+(16*SVO)+11
+		.dw	InnerScr2+(16*SVO8)+11,BaseVramAdr+(4<<8)|(255-18*8), MarkBuff+(16*SVO)+11
 		.db	14
-		.dw	InnerScr2+(15*SVO8)+13,BaseVramAdr+HILO(6,(255-17*8)),MarkBuff+(15*SVO)+13
+		.dw	InnerScr2+(15*SVO8)+13,BaseVramAdr+(6<<8)|(255-17*8), MarkBuff+(15*SVO)+13
 		.db	16
-		.dw	InnerScr2+(14*SVO8)+15,BaseVramAdr+HILO(8,(255-16*8)),MarkBuff+(14*SVO)+15
+		.dw	InnerScr2+(14*SVO8)+15,BaseVramAdr+(8<<8)|(255-16*8), MarkBuff+(14*SVO)+15
 		.db	18
-		.dw	InnerScr2+(13*SVO8)+17,BaseVramAdr+HILO(10,(255-15*8)),MarkBuff+(13*SVO)+17
+		.dw	InnerScr2+(13*SVO8)+17,BaseVramAdr+(10<<8)|(255-15*8), MarkBuff+(13*SVO)+17
 		.db	20
-		.dw	InnerScr2+(12*SVO8)+19,BaseVramAdr+HILO(12,(255-14*8)),MarkBuff+(12*SVO)+19
+		.dw	InnerScr2+(12*SVO8)+19,BaseVramAdr+(12<<8)|(255-14*8), MarkBuff+(12*SVO)+19
 		.db	22
-		.dw	InnerScr2+(11*SVO8)+21,BaseVramAdr+HILO(14,(255-13*8)),MarkBuff+(11*SVO)+21
+		.dw	InnerScr2+(11*SVO8)+21,BaseVramAdr+(14<<8)|(255-13*8), MarkBuff+(11*SVO)+21
 		.db	24
-		.dw	InnerScr2+(10*SVO8)+23,BaseVramAdr+HILO(16,(255-12*8)),MarkBuff+(10*SVO)+23
+		.dw	InnerScr2+(10*SVO8)+23,BaseVramAdr+(16<<8)|(255-12*8), MarkBuff+(10*SVO)+23
 		.db	26
-		.dw	InnerScr2+(9*SVO8)+25,BaseVramAdr+HILO(18,(255-11*8)),MarkBuff+(9*SVO)+25
+		.dw	InnerScr2+(9*SVO8)+25,BaseVramAdr+(18<<8)|(255-11*8), MarkBuff+(9*SVO)+25
 		.db	27
-		.dw	InnerScr2+(8*SVO8)+26,BaseVramAdr+HILO(19,(255-10*8)),MarkBuff+(8*SVO)+26
+		.dw	InnerScr2+(8*SVO8)+26,BaseVramAdr+(19<<8)|(255-10*8), MarkBuff+(8*SVO)+26
 		.db	27
-		.dw	InnerScr2+(7*SVO8)+28,BaseVramAdr+HILO(21,(255-9*8)),MarkBuff+(7*SVO)+28
+		.dw	InnerScr2+(7*SVO8)+28,BaseVramAdr+(21<<8)|(255-9*8), MarkBuff+(7*SVO)+28
 		.db	27
-		.dw	InnerScr2+(6*SVO8)+31,BaseVramAdr+HILO(24,(255-8*8)),MarkBuff+(6*SVO)+31
+		.dw	InnerScr2+(6*SVO8)+31,BaseVramAdr+(24<<8)|(255-8*8), MarkBuff+(6*SVO)+31
 		.db	25
-		.dw	InnerScr2+(5*SVO8)+31,BaseVramAdr+HILO(24,(255-7*8)),MarkBuff+(5*SVO)+31
+		.dw	InnerScr2+(5*SVO8)+31,BaseVramAdr+(24<<8)|(255-7*8), MarkBuff+(5*SVO)+31
 		.db	23
-		.dw	InnerScr2+(4*SVO8)+31,BaseVramAdr+HILO(24,(255-6*8)),MarkBuff+(4*SVO)+31
+		.dw	InnerScr2+(4*SVO8)+31,BaseVramAdr+(24<<8)|(255-6*8), MarkBuff+(4*SVO)+31
 		.db	21
-		.dw	InnerScr2+(3*SVO8)+31,BaseVramAdr+HILO(24,(255-5*8)),MarkBuff+(3*SVO)+31
+		.dw	InnerScr2+(3*SVO8)+31,BaseVramAdr+(24<<8)|(255-5*8), MarkBuff+(3*SVO)+31
 		.db	19
-		.dw	InnerScr2+(2*SVO8)+31,BaseVramAdr+HILO(24,(255-4*8)),MarkBuff+(2*SVO)+31
+		.dw	InnerScr2+(2*SVO8)+31,BaseVramAdr+(24<<8)|(255-4*8), MarkBuff+(2*SVO)+31
 		.db	17
-		.dw	InnerScr2+(1*SVO8)+31,BaseVramAdr+HILO(24,(255-3*8)),MarkBuff+(1*SVO)+31
+		.dw	InnerScr2+(1*SVO8)+31,BaseVramAdr+(24<<8)|(255-3*8), MarkBuff+(1*SVO)+31
 		.db	15
-		.dw	InnerScr2+(0*SVO8)+31,BaseVramAdr+HILO(24,(255-2*8)),MarkBuff+(0*SVO)+31
+		.dw	InnerScr2+(0*SVO8)+31,BaseVramAdr+(24<<8)|(255-2*8), MarkBuff+(0*SVO)+31
 		.db	0
 
 ;------------------------------------------------------------------------------
@@ -1028,223 +1028,223 @@ RedrawList:	.db	10
 ;     13 |       1 | inicializacna hodnota pre (0)
 ;     14 |       2 | inicializacna hodnota pre (1)
 ;--------|---------|-----------------------------------------------------------
-InitSpr:	lxi	h,SprListVL+6
-		lxi	d,14		; Главный Vorton
-		mvi	b,5
-InitSprA:	mov	m,d		; (6) тип спрайта
-		mvi	a,4
-		add	l
-		mov	l,a
-		mov	m,e		; (10) offset pre urcenie sekvencie spritu
-		mvi	a,12
-		add	l
-		mov	l,a		; (6) dalsia struktura spritu
-		lxi	d,HILO(10h,13)	; Auto-Vorton'ы
-		dcr	b
-		jnz	InitSprA
-		mvi	a,0FFh
-		sta	SprPrepList	; vyprazdni zoznam pripravenych spritov
-		lxi	h,SprList	; zoznam vsetkych spritov
-		mvi	b,249		; 249 структур спрайтов
-InitSprB:	push	b		; odpamataj pocitadlo
-		push	h		; odpamataj adresu struktury (zoznamu)
-		push	h		; odpamataj adresu struktury (zoznamu)
-		mvi	a,6
-		add	l
-		mov	l,a
-		mov	a,m		; (6) код спрайта
-		ani	0Fh		; odmaskuj iba zakladny kod
-		cpi	11		; maximalny kod je 10
-		jc	InitSprC
-		mvi	a,8		; kody mimo rozsah nastav na 8 - SprBrickB
-		mov	m,a
-InitSprC:	xchg
-		lxi	h,InitSprData	; inicializacne data
-		lxi	b,22		; offset na init. data pre druhu skupinu
-		ldax	d		; (6) kod spritu
-		ani	10h		; prva skupina spritov?
-		jz	InitSprD	; ano, skoc dalej
-		dad	b		; HL=init data pre druhu skupinu
-InitSprD:	ldax	d
-		ani	0Fh		; odmaskuj zakladny kod
-		add	a		; *2 - 2 inicializacne byty
-		mov	c,a		; uloz do BC
-		dad	b		; HL=init data pre tento sprite
-		dcx	d		; (5)
-		mov	a,m		; offset do zoznamu spritov
-		stax	d		; (5) uloz do struktury spritu
-		mvi	a,6
-		add	e
-		mov	e,a		; (11)
-		inx	h
-		mov	a,m		; offset do zoznamu "obsluznych" rutin
-		stax	d		; (11) uloz do struktury spritu
-		xchg
-		inx	h		; (12)
-		mov	c,m		; inic. hodnota sekvencie/otocenia spritu
-		inx	h		; (13)
-		pop	d		; (0) obnov adresu struktury
-		mov	a,m		; (13) -> (0)
-		stax	d		;  - posun na posledne 3 byty
-		inx	h		;    presun posledne 3 byty na zaciatok,
-		inx	d		;    kde je pociatocna pozicia spritu
-		mov	a,m		; (14) -> (1)
-		stax	d
-		inx	h
-		inx	d
-		mov	a,m		; (15) -> (2)
-		stax	d
-		mvi	a,-9
-		add	l
-		mov	l,a		; (6)
-		mov	b,m		; typ spritu
-		inx	h		; (7)
-		mov	a,c
-		ani	7
-		mov	m,a		; (7) sekvencia spritu (otocenie)
-		inx	h		; (8)
-		mov	a,m		; (8) aktualna rychlost spritu
-		cpi	5		; ak je >=5,
-		jnc	InitSprE	; skoc, ju vynulovat
-		mov	a,b		; typ spritu
-		ani	0Fh		; vynuluj bit druhej skupiny spritov
-		cpi	9		; ak je to Lasertron,
-		jnc	InitSprE	; skoc vynulovat rychlost
-		ana	a		; a tiez pre Vortona a AutoVortony
-		jnz	InitSprF	; pre ostatne sprity rychlost nemen
-InitSprE:	mvi	m,0		; (8) vynuluj rychlost pre vybrane sprity
-InitSprF:	dcx	d		; (1)
-		dcx	d		; (0)
-		ldax	d		; (0) vezmi suradnicu Y
-		cpi	0FEh		; ak je to neaktivny sprite,
-		jnc	InitSprG	; skoc spracovat dalsi sprite
-		mov	c,a		; Y do BC
-		mvi	b,0
-		inx	d		; (1) - XL
-		ldax	d
-		mov	l,a
-		inx	d		; (2) - XH
-		ldax	d
-		mov	h,a		; X do HL
-		inx	d		; (3)
-		push	d		; odpamataj ukazatel do struktury
+InitSpr:	ld hl,SprListVL+6
+		ld de,14		; Главный Vorton
+		ld b,5
+InitSprA:	ld (HL),d; (6) тип спрайта
+		ld a,4
+		add A,l
+		ld l,a
+		ld (HL),e		; (10) offset pre urcenie sekvencie spritu
+		ld a,12
+		add A,l
+		ld l,a		; (6) dalsia struktura spritu
+		ld de, (10h<<8)|13
+		dec b
+		jp NZ,InitSprA
+		ld a,0FFh
+		ld (SprPrepList),A	; vyprazdni zoznam pripravenych spritov
+		ld hl,SprList	; zoznam vsetkych spritov
+		ld b,249		; 249 структур спрайтов
+InitSprB:	push bc; odpamataj pocitadlo
+		push hl		; odpamataj adresu struktury (zoznamu)
+		push hl		; odpamataj adresu struktury (zoznamu)
+		ld a,6
+		add A,l
+		ld l,a
+		ld a,(HL)		; (6) код спрайта
+		and 0Fh		; odmaskuj iba zakladny kod
+		cp 11		; maximalny kod je 10
+		jp C,InitSprC
+		ld a,8		; kody mimo rozsah nastav na 8 - SprBrickB
+		ld (HL),a
+InitSprC:	ex DE,HL
+		ld hl,InitSprData	; inicializacne data
+		ld bc,22		; offset na init. data pre druhu skupinu
+		ld A,(de)		; (6) kod spritu
+		and 10h		; prva skupina spritov?
+		jp Z,InitSprD	; ano, skoc dalej
+		add HL,bc		; HL=init data pre druhu skupinu
+InitSprD:	ld A,(de)
+		and 0Fh		; odmaskuj zakladny kod
+		add A,a		; *2 - 2 inicializacne byty
+		ld c,a		; uloz do BC
+		add HL,bc		; HL=init data pre tento sprite
+		dec de		; (5)
+		ld a,(HL)		; offset do zoznamu spritov
+		ld (de),A		; (5) uloz do struktury spritu
+		ld a,6
+		add A,e
+		ld e,a		; (11)
+		inc hl
+		ld a,(HL)		; offset do zoznamu "obsluznych" rutin
+		ld (de),A		; (11) uloz do struktury spritu
+		ex DE,HL
+		inc hl		; (12)
+		ld c,(HL)		; inic. hodnota sekvencie/otocenia spritu
+		inc hl		; (13)
+		pop de		; (0) obnov adresu struktury
+		ld a,(HL)		; (13) -> (0)
+		ld (de),A		;  - posun na posledne 3 byty
+		inc hl		;    presun posledne 3 byty na zaciatok,
+		inc de		;    kde je pociatocna pozicia spritu
+		ld a,(HL)		; (14) -> (1)
+		ld (de),A
+		inc hl
+		inc de
+		ld a,(HL)		; (15) -> (2)
+		ld (de),A
+		ld a,-9
+		add A,l
+		ld l,a		; (6)
+		ld b,(HL)		; typ spritu
+		inc hl		; (7)
+		ld a,c
+		and 7
+		ld (HL),a		; (7) sekvencia spritu (otocenie)
+		inc hl		; (8)
+		ld a,(HL)		; (8) aktualna rychlost spritu
+		cp 5		; ak je >=5,
+		jp NC,InitSprE	; skoc, ju vynulovat
+		ld a,b		; typ spritu
+		and 0Fh		; vynuluj bit druhej skupiny spritov
+		cp 9		; ak je to Lasertron,
+		jp NC,InitSprE	; skoc vynulovat rychlost
+		and a		; a tiez pre Vortona a AutoVortony
+		jp NZ,InitSprF	; pre ostatne sprity rychlost nemen
+InitSprE:	ld (HL),0; (8) vynuluj rychlost pre vybrane sprity
+InitSprF:	dec de; (1)
+		dec de		; (0)
+		ld A,(de)		; (0) vezmi suradnicu Y
+		cp 0FEh		; ak je to neaktivny sprite,
+		jp NC,InitSprG	; skoc spracovat dalsi sprite
+		ld c,a		; Y do BC
+		ld b,0
+		inc de		; (1) - XL
+		ld A,(de)
+		ld l,a
+		inc de		; (2) - XH
+		ld A,(de)
+		ld h,a		; X do HL
+		inc de		; (3)
+		push de		; odpamataj ukazatel do struktury
 		; vypocitaj adresu do VO2
-		push	h		; odpamataj X
-		push	b		; odpamataj Y
-		dad	b		; HL = X + Y
-		mov	a,h		; Hl = HL / 2
-		ora	a		; CY=0
-		rar
-		mov	h,a
-		mov	a,l
-		rar
-		mov	l,a
-		dad	h		; *2
-		dad	h		; *4
-		dad	h		; *8
-		dad	h		; *16
-		dad	h		; *32
-		xchg			; DE = ((X + Y) / 2) * 32
-		lxi	h,InnerScr2+13A3h ;TODO было =0BFFCh
-		call	SubHLDE		; HL = 0BFFCh - (((X + Y) / 2) * 32)
-		pop	d		; obnov Y do DE
-		xthl			; medzivysedok na zasobnik, HL=X
-		call	SubHLDE		; HL = X - Y
-		mvi	d,8
-		call	Div16x8		; HL = (X - Y) / 8, A = (X - Y) MOD 8
-		pop	d		; obnov medzivysledok a pripocitaj
-		dad	d		; HL = (0BFFCh - (((X + Y) / 2) * 32)) + ((X - Y) / 8)
-		xchg			; premiestni vysledok do DE
-		pop	h		; obnov ukazatel do struktury
-		mov	m,e		; (3) a uloz vysledok do struktury
-		inx	h		; (4)
-		mov	m,d
-		rar			; A = ((X - Y) MOD 8) / 2
-		mov	c,a		; typ zobrzovacej rutiny do C {0, 1, 2, 3}
-		mvi	a,5
-		add	l
-		mov	l,a		; (9)
-		mov	m,c		; uloz (0, 1, 2, 3)
-InitSprG:	pop	h		; obnov adresu struktury
-		lxi	b,16		; offset na dalsiu strukturu
-		dad	b		; prejdi na dalsiu
-		pop	b		; obnov pocitadlo
-		dcr	b		; opakuj pre vsetky sprity
-		jnz	InitSprB
+		push hl		; odpamataj X
+		push bc		; odpamataj Y
+		add HL,bc		; HL = X + Y
+		ld a,h		; Hl = HL / 2
+		or a		; CY=0
+		rra
+		ld h,a
+		ld a,l
+		rra
+		ld l,a
+		add HL,hl		; *2
+		add HL,hl		; *4
+		add HL,hl		; *8
+		add HL,hl		; *16
+		add HL,hl		; *32
+		ex DE,HL			; DE = ((X + Y) / 2) * 32
+		ld hl,InnerScr2+13A3h ;TODO было =0BFFCh
+		call SubHLDE		; HL = 0BFFCh - (((X + Y) / 2) * 32)
+		pop de		; obnov Y do DE
+		ex (SP),HL			; medzivysedok na zasobnik, HL=X
+		call SubHLDE		; HL = X - Y
+		ld d,8
+		call Div16x8		; HL = (X - Y) / 8, A = (X - Y) MOD 8
+		pop de		; obnov medzivysledok a pripocitaj
+		add HL,de		; HL = (0BFFCh - (((X + Y) / 2) * 32)) + ((X - Y) / 8)
+		ex DE,HL			; premiestni vysledok do DE
+		pop hl		; obnov ukazatel do struktury
+		ld (HL),e		; (3) a uloz vysledok do struktury
+		inc hl		; (4)
+		ld (HL),d
+		rra			; A = ((X - Y) MOD 8) / 2
+		ld c,a		; typ zobrzovacej rutiny do C {0, 1, 2, 3}
+		ld a,5
+		add A,l
+		ld l,a		; (9)
+		ld (HL),c		; uloz (0, 1, 2, 3)
+InitSprG:	pop hl; obnov adresu struktury
+		ld bc,16		; offset na dalsiu strukturu
+		add HL,bc		; prejdi na dalsiu
+		pop bc		; obnov pocitadlo
+		dec b		; opakuj pre vsetky sprity
+		jp NZ,InitSprB
 		ret
 
 ;------------------------------------------------------------------------------
-PrepSpr:	xra	a
-		sta	SprListOrd	; vyprazdni zoznam zoradenych spritov
+PrepSpr:	xor a
+		ld (SprListOrd),A	; vyprazdni zoznam zoradenych spritov
 ; do hlavneho zoznamu vrat sprity, ktore boli v predoslom "frame"
-		lxi	h,SprPrepList	; zoznam pripravenych spritov
-		mvi	c,14
-PrepSprA:	mov	a,m		; znacka (suradnica Y)
-		cpi	0FFh		; je to koniec zoznamu?
-		jz	PrepSprZ	; ano, skoc dalej
-		push	h
-		mov	a,l
-		add	c
-		mov	l,a		; (14)
-		mov	e,m		; адрес назначения povodnej struktury
-		inx	h		; spritu do DE
-		mov	d,m
-		inx	h		; (0)
-		xthl			; адрес источника do HL
-		mvi	b,13		; 13 bytov struktury
-		call	Copy8		; prekopiruj
-		pop	h		; prejdi na dalsiu strukturu
-		jmp	PrepSprA
+		ld hl,SprPrepList	; zoznam pripravenych spritov
+		ld c,14
+PrepSprA:	ld a,(HL); znacka (suradnica Y)
+		cp 0FFh		; je to koniec zoznamu?
+		jp Z,PrepSprZ	; ano, skoc dalej
+		push hl
+		ld a,l
+		add A,c
+		ld l,a		; (14)
+		ld e,(HL)		; адрес назначения povodnej struktury
+		inc hl		; spritu do DE
+		ld d,(HL)
+		inc hl		; (0)
+		ex (SP),HL			; адрес источника do HL
+		ld b,13		; 13 bytov struktury
+		call Copy8		; prekopiruj
+		pop hl		; prejdi na dalsiu strukturu
+		jp PrepSprA
 
 ; найти правильную зону в соответствии с текущей позицией Vorton и инициализировать соответствующие переменные
-PrepSprZ:	lhld	VortonStruct	; adresa struktury aktualneho hlavneho
-		inx	h		;  Vortona
-		mov	c,m		; X координаты положения в DE
-		inx	h
-		mov	b,m
-		mov	a,b		; ak je pozicia < 0B0h,
-		ana	a
-		jnz	PrepSprB
-		mov	a,c
-		cpi	0B0h
-		jnc	PrepSprB
-		dcx	h
-		mvi	c,0B0h		; nastav ju na 0B0h
-		mov	m,c
-PrepSprB:	mvi	a,1		; номер зоны 1 (до 36)
-		lxi	d,07F0h		; offset adresy VO2 pre sprity
-		lxi	h,00B0h		; pociatocna pozicia v zone
-PrepSprC:	push	psw		; odpamataj pocitadlo
-		push	b		; odpamataj aktualnu poziciu Vortona
+PrepSprZ:	ld HL,(VortonStruct); adresa struktury aktualneho hlavneho
+		inc hl		;  Vortona
+		ld c,(HL)		; X координаты положения в DE
+		inc hl
+		ld b,(HL)
+		ld a,b		; ak je pozicia < 0B0h,
+		and a
+		jp NZ,PrepSprB
+		ld a,c
+		cp 0B0h
+		jp NC,PrepSprB
+		dec hl
+		ld c,0B0h		; nastav ju na 0B0h
+		ld (HL),c
+PrepSprB:	ld a,1; номер зоны 1 (до 36)
+		ld de,07F0h		; offset adresy VO2 pre sprity
+		ld hl,00B0h		; pociatocna pozicia v zone
+PrepSprC:	push af; odpamataj pocitadlo
+		push bc		; odpamataj aktualnu poziciu Vortona
 					; od aktualnej pozicie Vortona odpocitaj
-		call	SubBCHL		; pociatocnu poziciu v zone
+		call SubBCHL		; pociatocnu poziciu v zone
 ;		mov	a,b		; ak je rozdiel < 0B0h, Vorton je
 ;		ana	a		; v tejto Zone
-		jnz	PrepSprD
-		mov	a,c
-		cpi	0B0h
-		jc	PrepSprE	; a tak skoc dalej
-PrepSprD:	lxi	b,0B0h		; posun sa do dalsej zony
-		dad	b
-		xchg
-		lxi	b,0AEAh		; aj offset vo VO2
-		dad	b
-		xchg
-		pop	b		; obnov aktualnu poziciu Vortona
-		pop	psw		; obnov cislo Zony
-		inr	a		; cislo zony +1
-		jmp	PrepSprC
+		jp NZ,PrepSprD
+		ld a,c
+		cp 0B0h
+		jp C,PrepSprE	; a tak skoc dalej
+PrepSprD:	ld bc,0B0h; posun sa do dalsej zony
+		add HL,bc
+		ex DE,HL
+		ld bc,0AEAh		; aj offset vo VO2
+		add HL,bc
+		ex DE,HL
+		pop bc		; obnov aktualnu poziciu Vortona
+		pop af		; obnov cislo Zony
+		inc a		; cislo zony +1
+		jp PrepSprC
 
-PrepSprE:	pop	b		; zahod jednu polozku zasobnika
-		shld	ZonePos		; исходное положение в зоне
-		lxi	b,0FFD0h	; -30h
-		dad	b		; обратный отсчет области перед границей зоны
-		shld	ZonePosQ	; uloz
-		lxi	b,0FF80h	; -80h
-		dad	b		; обратный отсчет до начала предыдущей зоны
-		shld	ZonePosP	; uloz
+PrepSprE:	pop bc; zahod jednu polozku zasobnika
+		ld (ZonePos),HL		; исходное положение в зоне
+		ld bc,0FFD0h	; -30h
+		add HL,bc		; обратный отсчет области перед границей зоны
+		ld (ZonePosQ),HL	; uloz
+		ld bc,0FF80h	; -80h
+		add HL,bc		; обратный отсчет до начала предыдущей зоны
+		ld (ZonePosP),HL	; uloz
 
-		pop	b		; obnov cislo Zony do B
+		pop bc		; obnov cislo Zony do B
 ;		mov	a,b		; a uloz do A
 ;		add	a		; к каждой зоне добавляются 2 шага
 ;		dcr	a		; okrem prvej
@@ -1255,186 +1255,186 @@ PrepSprE:	pop	b		; zahod jednu polozku zasobnika
 
 ;PrepSprI:	adi	3
 ;		sta	SprOffStep	; дополнительное смещение в шагах
-		xchg
-		shld	SprOffZone	; offset pozicie spritov podla zony
+		ex DE,HL
+		ld (SprOffZone),HL	; offset pozicie spritov podla zony
 
 		; priprav cislo zony a zobraz ho
-		mov	a,b		; cislo Zony do A
-		sta	ZoneNumberT	; uloz
-		lxi	h,ZoneNumber	; adresa premennej cislo zony 1 az 31
-		cpi	32		; ak je to < 32
-		jc	PrepSprF	; skoc dalej
-		mvi	a,32		; uloz maximum 32
-		mov	m,a
-		dcr	a		; a uprav na 31
-		jmp	PrepSprG
+		ld a,b		; cislo Zony do A
+		ld (ZoneNumberT),A	; uloz
+		ld hl,ZoneNumber	; adresa premennej cislo zony 1 az 31
+		cp 32		; ak je to < 32
+		jp C,PrepSprF	; skoc dalej
+		ld a,32		; uloz maximum 32
+		ld (HL),a
+		dec a		; a uprav na 31
+		jp PrepSprG
 
-PrepSprF:	mov	m,a		; uloz cislo miestnosti
-PrepSprG:	call	PrintZoneNum
+PrepSprF:	ld (HL),a; uloz cislo miestnosti
+PrepSprG:	call PrintZoneNum
 
 		; подготовить новый список спрайтов
-		lxi	h,SprList	; adresa zoznamu vsetkych struktur spritov
-		lxi	d,SprPrepList	; adresa zoznamu pripravenych spritov
-		lxi	b,44		; макс. 44 объекта
-PrepSprK:	mov	a,m		; Y suradnica
-		cpi	0FEh		; je to neaktivny sprite?
-		jnc	PrepSprL	; ano, skoc dalej
-		push	h
-		push	d
-		inx	h		; (1)
-		mov	e,m		; X pozicia spritu do HL
-		inx	h		; (2)
-		mov	d,m
-		lhld	ZonePosP	; pozicia predoslej zony
-		xchg
-		call	SubHLDE		; odpocitaj
+		ld hl,SprList	; adresa zoznamu vsetkych struktur spritov
+		ld de,SprPrepList	; adresa zoznamu pripravenych spritov
+		ld bc,44		; макс. 44 объекта
+PrepSprK:	ld a,(HL); Y suradnica
+		cp 0FEh		; je to neaktivny sprite?
+		jp NC,PrepSprL	; ano, skoc dalej
+		push hl
+		push de
+		inc hl		; (1)
+		ld e,(HL)		; X pozicia spritu do HL
+		inc hl		; (2)
+		ld d,(HL)
+		ld HL,(ZonePosP)	; pozicia predoslej zony
+		ex DE,HL
+		call SubHLDE		; odpocitaj
 ;		mov	a,h		; ak sa tento sprite nachadza dalej, ako
-		pop	d
-		pop	h
-		cpi	2		; 1 zonu pred a 1 zonu za aktualnou zonou,
-		jnc	PrepSprL	; skoc dalej
-		push	h
-		mvi	b,14		; prenos 14 bytov struktury
-		call	Copy8
-		pop	h
-		mov	a,l		; na koniec pridaj samotnu adresu
-		stax	d		; struktury
-		inx	d
-		mov	a,h
-		stax	d
-		inx	d
-		dcr	c		; zniz pocitadlo
-		jz	PrepSprM	; skoc, ak je zoznam plny
-PrepSprL:	mov	a,c
-		mvi	c,16		; prejdi na dalsiu strukturu
-		dad	b
-		mov	c,a
-		mov	a,h		; presli sa vsetky?
-		cpi	SprListVL/256
-		jc	PrepSprK	; nie, pokracuj dalsou
-PrepSprM:	mvi	a,0FFh		; ukonci zoznam
-		stax	d
+		pop de
+		pop hl
+		cp 2		; 1 zonu pred a 1 zonu za aktualnou zonou,
+		jp NC,PrepSprL	; skoc dalej
+		push hl
+		ld b,14		; prenos 14 bytov struktury
+		call Copy8
+		pop hl
+		ld a,l		; na koniec pridaj samotnu adresu
+		ld (de),A		; struktury
+		inc de
+		ld a,h
+		ld (de),A
+		inc de
+		dec c		; zniz pocitadlo
+		jp Z,PrepSprM	; skoc, ak je zoznam plny
+PrepSprL:	ld a,c
+		ld c,16		; prejdi na dalsiu strukturu
+		add HL,bc
+		ld c,a
+		ld a,h		; presli sa vsetky?
+		cp SprListVL/256
+		jp C,PrepSprK	; nie, pokracuj dalsou
+PrepSprM:	ld a,0FFh; ukonci zoznam
+		ld (de),A
 
 		; deaktivuj sprity "Vybuch"
-		lxi	h,SprList+5	; adresa zoznamu vsetkych struktur spritov
-		lxi	d,HILO(80h,0E0h)
-		lxi	b,16		; velkost struktury
-PrepSprN:	mov	a,m		; (5) je to sprite "Vybuch"?
-		cmp	d
-		jc	PrepSprO	; nie, skoc dalej
-		cmp	e
-		jnc	PrepSprO	; nie, skoc dalej
-		inx	h		; (6)
-		inx	h		; (7)
-		inx	h		; (8)
-		mov	a,m		; zrus flag rychlosti
-		ani	7Fh
-		mov	m,a
-		mvi	a,-8
-		add	l
-		mov	l,a		; (0)
-		mvi	m,0FEh		; deaktivuj sprite
-		mvi	a,5
-		add	l
-		mov	l,a		; (5)
-PrepSprO:	dad	b		; dalsi sprite
-		mov	a,h		; presli sa vsetky?
-		cpi	SprListVL/256
-		jc	PrepSprN	; nie, pokracuj dalsou
+		ld hl,SprList+5	; adresa zoznamu vsetkych struktur spritov
+		ld de,(80h<<8)|0E0h
+		ld bc,16		; velkost struktury
+PrepSprN:	ld a,(HL); (5) je to sprite "Vybuch"?
+		cp d
+		jp C,PrepSprO	; nie, skoc dalej
+		cp e
+		jp NC,PrepSprO	; nie, skoc dalej
+		inc hl		; (6)
+		inc hl		; (7)
+		inc hl		; (8)
+		ld a,(HL)		; zrus flag rychlosti
+		and 7Fh
+		ld (HL),a
+		ld a,-8
+		add A,l
+		ld l,a		; (0)
+		ld (HL),0FEh		; deaktivuj sprite
+		ld a,5
+		add A,l
+		ld l,a		; (5)
+PrepSprO:	add HL,bc; dalsi sprite
+		ld a,h		; presli sa vsetky?
+		cp SprListVL/256
+		jp C,PrepSprN	; nie, pokracuj dalsou
 		ret
 
 ;------------------------------------------------------------------------------
 ; Zoradenie spritov podla IZO hlbky.
-SortSpr:	lxi	h,SprListOrd	; koncova adresa zoznamu zoradenych
-		shld	SprListOrdEnd	;  spritov uloz
-		mvi	m,0		; vyprazdni zoznam
-		lhld	VortonStruct	; zaciatok zoznamu spritov do IX
-SortSprA:	mov	a,m		; Y pozicia spritu
-		cpi	0FEh		; je to neaktivny sprite?
-		jz	SortSprF	; ano, preskoc ho
-		rnc			; koniec zoznamu, navrat
-		mov	b,a		; Y pozicia do B
-		push	h
-		mvi	a,6
-		add	l
-		mov	l,a		; (6) - typ spritu
-		mov	a,m		; typ spritu do A
-		cpi	16h		; je to drsny povrch (Rough)?
-		jz	SortSprG	; ano, preskoc ho
-		cpi	19h		; je to tehla (BrickA)?
-		jz	SortSprG	; ano, preskoc ho
-		mvi	a,-4
-		add	l
-		mov	l,a		; (2) - XH
-		mov	d,m
-		dcx	h		; (1) - XL
-		mov	e,m		; X pozicia do DE
-		lhld	ZonePosQ	; pozicia zony do HL
-		xchg			; zamen
-		call	SubHLDE		; porovnj pozicie
+SortSpr:	ld hl,SprListOrd; koncova adresa zoznamu zoradenych
+		ld (SprListOrdEnd),HL	;  spritov uloz
+		ld (HL),0		; vyprazdni zoznam
+		ld HL,(VortonStruct)	; zaciatok zoznamu spritov do IX
+SortSprA:	ld a,(HL); Y pozicia spritu
+		cp 0FEh		; je to neaktivny sprite?
+		jp Z,SortSprF	; ano, preskoc ho
+		ret NC			; koniec zoznamu, navrat
+		ld b,a		; Y pozicia do B
+		push hl
+		ld a,6
+		add A,l
+		ld l,a		; (6) - typ spritu
+		ld a,(HL)		; typ spritu do A
+		cp 16h		; je to drsny povrch (Rough)?
+		jp Z,SortSprG	; ano, preskoc ho
+		cp 19h		; je to tehla (BrickA)?
+		jp Z,SortSprG	; ano, preskoc ho
+		ld a,-4
+		add A,l
+		ld l,a		; (2) - XH
+		ld d,(HL)
+		dec hl		; (1) - XL
+		ld e,(HL)		; X pozicia do DE
+		ld HL,(ZonePosQ)	; pozicia zony do HL
+		ex DE,HL			; zamen
+		call SubHLDE		; porovnj pozicie
 ;		ora	a		; nachadza sa tento sprite v aktualnej zone?
-		jnz	SortSprG	; ak nie, preskoc ho
-		mov	a,b		; offset od zaciatku zony (X)
-		rar
-		mov	b,a		; Y=Y/2
-		ora	a
-		mov	a,l
-		rar			; X=X/2
-		add	b
-		inr	a		; Z=X/2+Y/2+1
-		lxi	h,SprListOrd	; najdi v zozname miesto kam patri
-SortSprB:	cmp	m		; tento sprite podla Z
-		jnc	SortSprC	; skoc, ak patri tu
-		inx	h		; prejdi na dalsiu polozku v zozname 
-		inx	h
-		inx	h
-		jmp	SortSprB
+		jp NZ,SortSprG	; ak nie, preskoc ho
+		ld a,b		; offset od zaciatku zony (X)
+		rra
+		ld b,a		; Y=Y/2
+		or a
+		ld a,l
+		rra			; X=X/2
+		add A,b
+		inc a		; Z=X/2+Y/2+1
+		ld hl,SprListOrd	; najdi v zozname miesto kam patri
+SortSprB:	cp (HL); tento sprite podla Z
+		jp NC,SortSprC	; skoc, ak patri tu
+		inc hl		; prejdi na dalsiu polozku v zozname
+		inc hl
+		inc hl
+		jp SortSprB
 
-SortSprC:	push	psw		; odpamataj Z spritu
-		xra	a		; patri aktualny sprite na koniec
-		cmp	m		;  zoznamu?
-		jnz	SortSprD	; nie, skoc dalej
-		xchg
-		lhld	SprListOrdEnd	; adresa konca zoznamu do HL
-		inx	h		; posun ukazatel konca zoznamu
-		inx	h
-		inx	h
-		shld	SprListOrdEnd	; a uloz
-		mov	m,a		; a uloz koncovu znacku
-		xchg
-		jmp	SortSprE	; skoc ulozit refeenciu na sprite
+SortSprC:	push af; odpamataj Z spritu
+		xor a		; patri aktualny sprite na koniec
+		cp (HL)		;  zoznamu?
+		jp NZ,SortSprD	; nie, skoc dalej
+		ex DE,HL
+		ld HL,(SprListOrdEnd)	; adresa konca zoznamu do HL
+		inc hl		; posun ukazatel konca zoznamu
+		inc hl
+		inc hl
+		ld (SprListOrdEnd),HL	; a uloz
+		ld (HL),a		; a uloz koncovu znacku
+		ex DE,HL
+		jp SortSprE	; skoc ulozit refeenciu na sprite
 
 ; sprite treba vlozit do zoznamu, takze treba cast zoznamu presunut
-SortSprD:	push	h		; odpamataj cielovu adresu v zozname
-		xchg
-		lhld	SprListOrdEnd	; adresa konca zoznamu do HL
-		mov	a,l		; vypocitaj dlzku presuvanej casti
-		sub	e		;  zoznamu do BC
-		mov	c,a
-		inr	c		; +1 pre koncovu znacku
-		mov	e,l		; HL=адрес источника presunu
-		inx	h
-		inx	h
-		inx	h		; DE=адрес назначения presunu
-		shld	SprListOrdEnd	; uloz ako novu koncovu adresu zoznamu
-SortSprH:	ldax	d		; presun cas zoznamu odzadu
-		mov	m,a
-		dcx	d
-		dcx	h
-		dcr	c
-		jnz	SortSprH
-		pop	h		; obnov cielovu adresu pre sprite
-SortSprE:	pop	psw		; obnov Z spritu
-		pop	d		; adresa strktury spritu do DE
-		push	d
-		mov	m,a		; uloz Z spritu
-		inx	h
-		mov	m,e		; a uloz ju do zoznamu
-		inx	h
-		mov	m,d
-SortSprG:	pop	h
-SortSprF:	lxi	d,16		; jedna struktura spritu ma 16 bytov
-		dad	d		; dalsia struktura
-		jmp	SortSprA	; spracuj ju
+SortSprD:	push hl; odpamataj cielovu adresu v zozname
+		ex DE,HL
+		ld HL,(SprListOrdEnd)	; adresa konca zoznamu do HL
+		ld a,l		; vypocitaj dlzku presuvanej casti
+		sub e		;  zoznamu do BC
+		ld c,a
+		inc c		; +1 pre koncovu znacku
+		ld e,l		; HL=адрес источника presunu
+		inc hl
+		inc hl
+		inc hl		; DE=адрес назначения presunu
+		ld (SprListOrdEnd),HL	; uloz ako novu koncovu adresu zoznamu
+SortSprH:	ld A,(de); presun cas zoznamu odzadu
+		ld (HL),a
+		dec de
+		dec hl
+		dec c
+		jp NZ,SortSprH
+		pop hl		; obnov cielovu adresu pre sprite
+SortSprE:	pop af; obnov Z spritu
+		pop de		; adresa strktury spritu do DE
+		push de
+		ld (HL),a		; uloz Z spritu
+		inc hl
+		ld (HL),e		; a uloz ju do zoznamu
+		inc hl
+		ld (HL),d
+SortSprG:	pop hl
+SortSprF:	ld de,16; jedna struktura spritu ma 16 bytov
+		add HL,de		; dalsia struktura
+		jp SortSprA	; spracuj ju
 
 ;------------------------------------------------------------------------------

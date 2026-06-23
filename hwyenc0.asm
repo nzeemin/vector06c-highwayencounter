@@ -20,111 +20,113 @@
 ; nzeemin 2022 порт на Вектор-06Ц
 ;------------------------------------------------------------------------------
 
-;----------------------------------------------------------------------------
-
 	.EXPORT Start
-	.EXPORT KeyLineEx, KeyLine0, KeyLine7, JoystickP
-	.EXPORT BorderColor, SetPaletteGame
+	.EXPORT KeyLineEx
+	.EXPORT KeyLine0
+	.EXPORT KeyLine7
+	.EXPORT JoystickP
+	.EXPORT BorderColor
+	.EXPORT SetPaletteGame
 
 ;----------------------------------------------------------------------------
 
 	.org	100h
 
 	di
-	xra	a
-	out	10h			; turn off the quasi-disk
-	lxi	sp,0100h
-	lxi	h,0C3F3h
-	shld	0
-	mov	a,h
-	lxi	h,RestartInt
-	shld	2
-	sta	38h
-	lxi	h,KEYINT		; interrupt handler address
-	shld	38h+1
+	xor a
+	out (10h),A			; turn off the quasi-disk
+	ld sp,0100h
+	ld hl,0C3F3h
+	ld (0),HL
+	ld a,h
+	ld hl,RestartInt
+	ld (2),HL
+	ld (38h),A
+	ld hl,KEYINT		; interrupt handler address
+	ld (38h+1),HL
 
 ; Move encoded block from Start to 8000h, LZSASIZET+LZSASIZE1 bytes
-	lxi	d,Start			; source addr
-	lxi	b,08000h		; destination addr
-	lxi	h,LZSASIZET+LZSASIZE1	; size
-	inr	h
+	ld de,Start			; source addr
+	ld bc,08000h		; destination addr
+	ld hl,LZSASIZET+LZSASIZE1	; size
+	inc h
 Init_1:
-	ldax	d
-	inx	d
-	stax	b
-	inx	b
-	dcr	l
-	jnz	Init_1
-	dcr	h
-	jnz	Init_1
+	ld A,(de)
+	inc de
+	ld (bc),A
+	inc bc
+	dec l
+	jp NZ,Init_1
+	dec h
+	jp NZ,Init_1
 ; Decompress the code and sprites from 08000h+LZSASIZET to Start
-	lxi	d,08000h+LZSASIZET	; source addr
-	lxi	b,Start			; destination addr
-	call	dzx0
+	ld de,08000h+LZSASIZET	; source addr
+	ld bc,Start			; destination addr
+	call dzx0
 ; Decompress 24K of the title screen from 8000h to A000h
-	lxi	d,08000h		; source addr
-	lxi	b,0A000h		; destination addr
-	call	dzx0
+	ld de,08000h		; source addr
+	ld bc,0A000h		; destination addr
+	call dzx0
 
 RestartInt:
-	lxi	sp,100h
-	mvi	a, 88h
-	out	4			; initialize R-Sound 2
+	ld sp,100h
+	ld a,88h
+	out (4),A			; initialize R-Sound 2
 ; Joystick init
-	mvi	a, 83h		; control byte
-	out	4		; initialize the I/O controller
-	mvi	a, 9Fh		; bits to check Joystick-P, both P1 and P2
-	out	5		; set Joystick-P query bits
-	in	6		; read Joystick-P initial value
-	sta	KEYINT_J+1	; store as xra instruction parameter
+	ld a,83h		; control byte
+	out (4),A		; initialize the I/O controller
+	ld a,9Fh		; bits to check Joystick-P, both P1 and P2
+	out (5),A		; set Joystick-P query bits
+	in A,(6)		; read Joystick-P initial value
+	ld (KEYINT_J+1),A	; store as xra instruction parameter
 
 ; Set palette for the title screen
-	lxi	h, PaletteTitle+15
-	call	SetPalette
+	ld hl,PaletteTitle+15
+	call SetPalette
 ;	ei
-	jp	Start
+	jp P,Start
 
 ; Set game palette
 SetPaletteGame:
-	lxi	h, PaletteGame+15
-	
+	ld hl,PaletteGame+15
+
 ; Programming the Palette
 SetPalette:
 	ei
-	hlt
-	lxi	d, 100Fh
+	halt
+	ld de,100Fh
 PaletLoop:
-	mov	a, e
-	out	2
-	mov	a, m
-	out	0Ch
-	out	0Ch
-	out	0Ch
-	out	0Ch
-	out	0Ch
-	dcx	h
-	out	0Ch
-	dcr	e
-	out	0Ch
-	dcr	d
-	out	0Ch
-	jnz	PaletLoop
+	ld a,e
+	out (2),A
+	ld a,(HL)
+	out (0Ch),A
+	out (0Ch),A
+	out (0Ch),A
+	out (0Ch),A
+	out (0Ch),A
+	dec hl
+	out (0Ch),A
+	dec e
+	out (0Ch),A
+	dec d
+	out (0Ch),A
+	jp NZ,PaletLoop
 	ret
 
 ;----------------------------------------------------------------------------
 
 KEYINT:
-	push	psw
-	mvi	a, 8Ah
-	out	0
+	push af
+	ld a,8Ah
+	out (0),A
 ; Keyboard scan
-	in	1
-	ori	00011111b
-	sta	KeyLineEx
-	mvi	a, 0FEh
-	out	3
-	in	2
-	sta	KeyLine0
+	in A,(1)
+	or 00011111b
+	ld (KeyLineEx),A
+	ld a,0FEh
+	out (3),A
+	in A,(2)
+	ld (KeyLine0),A
 ;	mvi	a, 0FDh
 ;	out	3
 ;	in	2
@@ -137,29 +139,29 @@ KEYINT:
 ;	out	3
 ;	in	2
 ;	sta	KeyLine6
-	mvi	a, 07Fh
-	out	3
-	in	2
-	sta	KeyLine7
+	ld a,07Fh
+	out (3),A
+	in A,(2)
+	ld (KeyLine7),A
 ; Joystick scan
-	in	6		; read Joystick-P
+	in A,(6)		; read Joystick-P
 KEYINT_J:
-	xri	0		; XOR with initial value - mutable param!
-	cma
-	sta	JoystickP	; save to analyze later
+	xor 0		; XOR with initial value - mutable param!
+	cpl
+	ld (JoystickP),A	; save to analyze later
 
 ; Scrolling, screen mode, border
-	mvi	a, 88h
-	out	0
-	mvi	a, 2
-	out	1
-	mvi	a, 0FFh
-	out	3		; scrolling
-	lda	BorderColor
-	ani	0Fh
-	out	2		; screen mode and border
+	ld a,88h
+	out (0),A
+	ld a,2
+	out (1),A
+	ld a,0FFh
+	out (3),A		; scrolling
+	ld A,(BorderColor)
+	and 0Fh
+	out (2),A		; screen mode and border
 ;
-	pop	psw
+	pop af
 	ei
 	ret
 
@@ -194,116 +196,81 @@ PaletteTitle:
 
 ; ZX0 decompressor code by Ivan Gorodetsky
 ; https://github.com/ivagorRetrocomp/DeZX/blob/main/ZX0/8080/OLD_V1/dzx0_CLASSIC.asm
-; input: 	de=compressed data start
-;			bc=uncompressed destination start
-
-#ifdef BACKWARD
-#define NEXT_HL dcx h
-#define NEXT_DE dcx d
-#define NEXT_BC dcx b
-#else
-#define NEXT_HL inx h
-#define NEXT_DE inx d
-#define NEXT_BC inx b
-#endif
-
+; input:	de=compressed data start
+;		bc=uncompressed destination start
+;NOTE: FORWARD decompression only
 dzx0:
-#ifdef BACKWARD
-		lxi h,1
-		push h
-		dcr l
-#else
-		lxi h,0FFFFh
-		push h
-		inx h
-#endif
-		mvi a,080h
+		ld hl,0FFFFh
+		push HL
+		inc HL
+		ld A,080h
 dzx0_literals:
 		call dzx0_elias
 		call dzx0_ldir
-		jc dzx0_new_offset
+		jp c,dzx0_new_offset
 		call dzx0_elias
 dzx0_copy:
-		xchg
-		xthl
-		push h
-		dad b
-		xchg
+		ex DE,HL
+		ex (SP),HL
+		push HL
+		add HL,BC
+		ex DE,HL
 		call dzx0_ldir
-		xchg
-		pop h
-		xthl
-		xchg
-		jnc dzx0_literals
+		ex DE,HL
+		pop HL
+		ex (SP),HL
+		ex DE,HL
+		jp NC,dzx0_literals
 dzx0_new_offset:
 		call dzx0_elias
-#ifdef BACKWARD
-		inx sp
-		inx sp
-		dcr h
-		rz
-		dcr l
-		push psw
-		mov a,l
-#else
-		mov h,a
-		pop psw
-		xra a
-		sub l
-		rz
-		push h
-#endif
-		rar\ mov h,a
-		ldax d
-		rar\ mov l,a
-		NEXT_DE
-#ifdef BACKWARD
-		inx h
-#endif
-		xthl
-		mov a,h
-		lxi h,1
-#ifdef BACKWARD
-		cc dzx0_elias_backtrack
-#else
-		cnc dzx0_elias_backtrack
-#endif
-		inx h
-		jmp dzx0_copy
+		ld H,A
+		pop AF
+		xor A
+		sub L
+		ret z
+		push HL
+		rra
+		ld H,A
+		ld A,(DE)
+		rra
+		ld L,A
+		inc de
+		ex (SP),HL
+		ld A,H
+		ld HL,1
+		call nc,dzx0_elias_backtrack
+		inc HL
+		jp dzx0_copy
 dzx0_elias:
-		inr l
-dzx0_elias_loop:	
-		add a
-		jnz dzx0_elias_skip
-		ldax d
-		NEXT_DE
-		ral
+		inc L
+dzx0_elias_loop:
+		add A,A
+		jp NZ,dzx0_elias_skip
+		ld A,(de)
+		inc DE
+		rla
 dzx0_elias_skip:
-#ifdef BACKWARD
-		rnc
-#else
-		rc
-#endif
+		ret C
 dzx0_elias_backtrack:
-		dad h
-		add a
-		jnc dzx0_elias_loop
-		jmp dzx0_elias
+		add HL,HL
+		add A,A
+		jp NC,dzx0_elias_loop
+		jp dzx0_elias
 
 dzx0_ldir:
-		push psw
+		push AF
 dzx0_ldir1:
-		ldax d
-		stax b
-		NEXT_DE
-		NEXT_BC
-		dcx h
-		mov a,h
-		ora l
-		jnz dzx0_ldir1
-		pop psw
-		add a
-		ret 
+		ld A,(DE)
+		ld (BC),A
+		inc DE
+		inc BC
+		dec HL
+		ld A,H
+		or L
+		jp nz,dzx0_ldir1
+		pop AF
+		add A,A
+		ret
 
 ;----------------------------------------------------------------------------
 

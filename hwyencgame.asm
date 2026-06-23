@@ -21,56 +21,56 @@
 ;------------------------------------------------------------------------------
 
 ;------------------------------------------------------------------------------
-StartGame:	call	CheckScore	; porovnaj Score/HiScore a aktualizuj HI
-		lxi	h,Score		; vynuluj Skore
-		lxi	b,HILO(6,10)
-ZeroScore:	mov	m,c
-		inx	h
-		dcr	b
-		jnz	ZeroScore
-		mov	m,b
-		call	PrintScore	; zobraz Score
+StartGame:	call CheckScore; porovnaj Score/HiScore a aktualizuj HI
+		ld hl,Score		; vynuluj Skore
+		ld bc, (6<<8)|10
+ZeroScore:	ld (HL),c
+		inc hl
+		dec b
+		jp NZ,ZeroScore
+		ld (HL),b
+		call PrintScore	; zobraz Score
 
-		call	InitSpdLvl	; inicializuj uroven rychlosti na 0
-PlayAgain:	call	Intro		; uvodne intro
+		call InitSpdLvl	; inicializuj uroven rychlosti na 0
+PlayAgain:	call Intro; uvodne intro
 
-	#if CheatZone0
-		lxi	h,SprStructV1+1
-		lxi	d,14E8h
-		mov	m,e
-		inx	h
-		mov	m,d
-		inx	h
-		lxi	d,0FEF0h
-		mov	m,e
-		inx	h
-		mov	m,d
-		inx	h		; (5)
-		inx	h		; (6)
-		inx	h		; (7)
-		inx	h		; (8)
-		inx	h		; (9)
-		mvi	m,0
+	if CheatZone0
+		ld hl,SprStructV1+1
+		ld de,14E8h
+		ld (HL),e
+		inc hl
+		ld (HL),d
+		inc hl
+		ld de,0FEF0h
+		ld (HL),e
+		inc hl
+		ld (HL),d
+		inc hl		; (5)
+		inc hl		; (6)
+		inc hl		; (7)
+		inc hl		; (8)
+		inc hl		; (9)
+		ld (HL),0
 
-		lxi	h,SprStructLT+1
-		lxi	d,14D8h
-		mov	m,e		; (1)
-		inx	h
-		mov	m,d		; (2)
-		inx	h
-		lxi	d,0045h
-		mov	m,e		; (3)
-		inx	h
-		mov	m,d		; (4)
-		inx	h		; (5)
-		inx	h		; (6)
-		inx	h		; (7)
-		inx	h		; (8)
-		inx	h		; (9)
-		mvi	m,1
+		ld hl,SprStructLT+1
+		ld de,14D8h
+		ld (HL),e		; (1)
+		inc hl
+		ld (HL),d		; (2)
+		inc hl
+		ld de,0045h
+		ld (HL),e		; (3)
+		inc hl
+		ld (HL),d		; (4)
+		inc hl		; (5)
+		inc hl		; (6)
+		inc hl		; (7)
+		inc hl		; (8)
+		inc hl		; (9)
+		ld (HL),1
 
-		jmp	CheatJ
-	#endif
+		jp CheatJ
+	endif
 
 ; * hlavna slucka hry *
 		; ukoncenie hry
@@ -94,7 +94,7 @@ GameLoop:	;mvi	a,4		; test klavesov T+G - ukoncenie hry
 ;		;call	Print85Text	; zobraz text
 
 ;		lxi	h,MarkBuff+(8*SVO)+13 ; oznac miesto, ktore zakryva tento
-;		lxi	b,HILO(17,2)	;  text, ze ho bude treba prekreslit z VO1
+;		lxi	b, (17<<8)|2	;  text, ze ho bude treba prekreslit z VO1
 ;PauseModeA:	mov	m,c
 ;		inx	h
 ;		dcr	b
@@ -124,1187 +124,1187 @@ GameLoop:	;mvi	a,4		; test klavesov T+G - ukoncenie hry
 ;		jz	PauseModeD	; ano, cakaj na uvolnenie
 
 		; vykonanie jedneho frejmu (kroku)
-GameFrame:	call	UndrawSpr	; zmaz sprity z VO2
-		call	TestKbdJoy	; otestuj kbd/joy
-		call	ProcMove	; spracuj posuny podla stavu klaves
-		call	ProcSpr		; spracuj pohyb spritov a ich kolizie
-		call	SortSpr		; zorad sprity podla IZO hlbky
-		call	DrawSpr		; vykresli sprity
-		call	RedrawChangesDI	; prekresli zmeny
-		call	LTronMove	; zobraz posun LaserTronu na panely
-		call	Sound		; spracuj zvuky
+GameFrame:	call UndrawSpr; zmaz sprity z VO2
+		call TestKbdJoy	; otestuj kbd/joy
+		call ProcMove	; spracuj posuny podla stavu klaves
+		call ProcSpr		; spracuj pohyb spritov a ich kolizie
+		call SortSpr		; zorad sprity podla IZO hlbky
+		call DrawSpr		; vykresli sprity
+		call RedrawChangesDI	; prekresli zmeny
+		call LTronMove	; zobraz posun LaserTronu na panely
+		call Sound		; spracuj zvuky
 
 		; cakanie na LaserTron v Zone 0
-		lda	ZoneNumber	; cislo zony
-		cpi	30		; ak to nie je zona 0,
-		jc	DecTime		; skoc dalej
-		lxi	h,SprStructLT+1	; adresa struktury LaserTronu
-		mov	e,m		; pozicia LT DE
-		inx	h
-		mov	d,m
-		lxi	b,156Ch		; pozicia v Zone 0
-		call	SubDEBC		; porovnaj, ci uz LT prisiel do Zony 0
-		jz	LTronZone0	; ak ano, skoc dalej
+		ld A,(ZoneNumber)	; cislo zony
+		cp 30		; ak to nie je zona 0,
+		jp C,DecTime		; skoc dalej
+		ld hl,SprStructLT+1	; adresa struktury LaserTronu
+		ld e,(HL)		; pozicia LT DE
+		inc hl
+		ld d,(HL)
+		ld bc,156Ch		; pozicia v Zone 0
+		call SubDEBC		; porovnaj, ci uz LT prisiel do Zony 0
+		jp Z,LTronZone0	; ak ano, skoc dalej
 
 		; dekrement casu
-DecTime:	lhld	TimeDelay	; zdrzanie na jeden dielik casu
-	#if ~~CheatNoTime
-		dcx	h		; zniz
-	#endif
-		mov	a,l		; je nulovy?
-		ora	h
-		jnz	DecTimeE	; nie, skoc ulozit novu hodnotu
-		lda	TimePos		; znakovy stlpec dielika casu
-		rar			; vydel /2 - CY=1 pre dvojdielik
-		mov	e,a		; do E
-		mvi	d,26		; riadok pre TIME
-		jc	DecTimeB	; pre dvojdielik, skoc dalej
-		xra	a		; medzera
-		call	Print88		; zmaz jednodielik
-		dcr	e		; zniz znakovy stlpec na povodny
-		stc			; CY=1 pre dvojdielik
-		jmp	DecTimeC
+DecTime:	ld HL,(TimeDelay); zdrzanie na jeden dielik casu
+	if ~~CheatNoTime
+		dec hl		; zniz
+	endif
+		ld a,l		; je nulovy?
+		or h
+		jp NZ,DecTimeE	; nie, skoc ulozit novu hodnotu
+		ld A,(TimePos)		; znakovy stlpec dielika casu
+		rra			; vydel /2 - CY=1 pre dvojdielik
+		ld e,a		; do E
+		ld d,26		; riadok pre TIME
+		jp C,DecTimeB	; pre dvojdielik, skoc dalej
+		xor a		; medzera
+		call Print88		; zmaz jednodielik
+		dec e		; zniz znakovy stlpec na povodny
+		scf			; CY=1 pre dvojdielik
+		jp DecTimeC
 
-DecTimeB:	mvi	a,26		; jednodielik
-		call	Print88		; zobraz jednodielik
-DecTimeC:	dcr	e		; zniz znakovy stlpec na predchadzajuci
-		mov	a,e		; do A
-		ral			; pripoj CY do 0. bitu
-		sta	TimePos		; a uloz novu hodnotu
-		cpi	19*2		; bol to uz posledny dielik casu?
-		jnc	DecTimeD	; nie, skoc dalej
+DecTimeB:	ld a,26; jednodielik
+		call Print88		; zobraz jednodielik
+DecTimeC:	dec e; zniz znakovy stlpec na predchadzajuci
+		ld a,e		; do A
+		rla			; pripoj CY do 0. bitu
+		ld (TimePos),A		; a uloz novu hodnotu
+		cp 19*2		; bol to uz posledny dielik casu?
+		jp NC,DecTimeD	; nie, skoc dalej
 		; cas vyprsal ...
-		lxi	h,TTooLate	; text "TOO LATE, MISSION TERMINATED"
-		jmp	Print85Text	; skoc zobrazit text a ukoncit hru
+		ld hl,TTooLate	; text "TOO LATE, MISSION TERMINATED"
+		jp Print85Text	; skoc zobrazit text a ukoncit hru
 
-DecTimeD:	lxi	h,3500		; inicializuj zdrzanie pre dalsi dielik casu
-DecTimeE:	shld	TimeDelay	; uloz novu hodnotu zdrzania
+DecTimeD:	ld hl,3500; inicializuj zdrzanie pre dalsi dielik casu
+DecTimeE:	ld (TimeDelay),HL; uloz novu hodnotu zdrzania
 
 		; test na stratu Vortona
-		lhld	VortonStruct	; adresa struktury aktualneho Vortona
-		mov	a,m		; nastala strata Vortona?
-		cpi	0FEh
-		jc	GameLoop	; nie, vrat sa do hlavnej hernej slucky
+		ld HL,(VortonStruct)	; adresa struktury aktualneho Vortona
+		ld a,(HL)		; nastala strata Vortona?
+		cp 0FEh
+		jp C,GameLoop	; nie, vrat sa do hlavnej hernej slucky
 
-		lda	VortonHead	; znakovy stlpec hlavy akt. Vortona na panely
-		mov	e,a		; uloz do E
-LostVorton:	lxi	b,16		; offset na dalsiu strukturu
-LostVortonA:	dad	b		; prejdi na nasledujuceho Vortona
-		inr	e		; posun znakovy stlpec na dalsiu "hlavu"
-		inr	e
-		mov	a,l		; presli sme uz vsetkych Vortonov 
-		cpi	SprStructLT&255
-		jc	LostVortonB	; nie, skoc dalej
+		ld A,(VortonHead)	; znakovy stlpec hlavy akt. Vortona na panely
+		ld e,a		; uloz do E
+LostVorton:	ld bc,16; offset na dalsiu strukturu
+LostVortonA:	add HL,bc; prejdi na nasledujuceho Vortona
+		inc e		; posun znakovy stlpec na dalsiu "hlavu"
+		inc e
+		ld a,l		; presli sme uz vsetkych Vortonov
+		cp SprStructLT&255
+		jp C,LostVortonB	; nie, skoc dalej
 		; koniec hry
-		lxi	h,TGameOver	; text "GAME OVER, ALL VORTONS DESTROYED"
-		jmp	Print85Text	; zobraz text a ukonci hru
+		ld hl,TGameOver	; text "GAME OVER, ALL VORTONS DESTROYED"
+		jp Print85Text	; zobraz text a ukonci hru
 
-LostVortonB:	mov	a,m		; je to aktivny sprite (Vorton)?
-		cpi	0FEh
-		jnc	LostVortonA	; nie, skoc skusit dalsieho
-		shld	VortonStruct	; uloz novu adresu aktualneho Vortona
-		mvi	a,8
-		add	l
-		mov	l,a		; (8) - rychlost pohybu spritu
-		mov	a,m		; je Vorton aktivny?
-		ora	a
-		jm	LostVortonA	; nie, skoc skusit dalsieho
-		mov	a,e		; uloz aktualnu poziciu
-		sta	VortonHead	; aktivneho Vortona na panely
-		mvi	d,20		; znakovy riadok hlavy Vortona
-		mvi	a,29		; zobraz hlavu pre noveho aktualneho
-		call	Print88		; Vortona
-		mvi	a,30
-		call	Print88
-		dcr	l		; (7)
-		dcr	l		; (6) - "kod" spritu
-		mov	a,m		; urob z AutoVortona (10h) Vortona (00h)
-		ani	0Fh
-		mov	m,a
-		dcr	l		; (5) - sekvencia spritu
-		mvi	m,0		; vynuluj sekvenciu
-		mvi	a,5		; presun ukazatel v strukture
-		add	l
-		mov	l,a		; (10) - offset do zozamu pre urcenie sekvencie spritu
-		mvi	m,0Eh		; nastav na Seq0E
-CheatJ:		call	PrepSpr		; priprav sprity
-		call	DrawZone	; vykresli Zonu
-		jmp	GameLoop	; vrat sa do hernej slucky
+LostVortonB:	ld a,(HL); je to aktivny sprite (Vorton)?
+		cp 0FEh
+		jp NC,LostVortonA	; nie, skoc skusit dalsieho
+		ld (VortonStruct),HL	; uloz novu adresu aktualneho Vortona
+		ld a,8
+		add A,l
+		ld l,a		; (8) - rychlost pohybu spritu
+		ld a,(HL)		; je Vorton aktivny?
+		or a
+		jp M,LostVortonA	; nie, skoc skusit dalsieho
+		ld a,e		; uloz aktualnu poziciu
+		ld (VortonHead),A	; aktivneho Vortona na panely
+		ld d,20		; znakovy riadok hlavy Vortona
+		ld a,29		; zobraz hlavu pre noveho aktualneho
+		call Print88		; Vortona
+		ld a,30
+		call Print88
+		dec l		; (7)
+		dec l		; (6) - "kod" spritu
+		ld a,(HL)		; urob z AutoVortona (10h) Vortona (00h)
+		and 0Fh
+		ld (HL),a
+		dec l		; (5) - sekvencia spritu
+		ld (HL),0		; vynuluj sekvenciu
+		ld a,5		; presun ukazatel v strukture
+		add A,l
+		ld l,a		; (10) - offset do zozamu pre urcenie sekvencie spritu
+		ld (HL),0Eh		; nastav na Seq0E
+CheatJ:		call PrepSpr; priprav sprity
+		call DrawZone	; vykresli Zonu
+		jp GameLoop	; vrat sa do hernej slucky
 
 ;------------------------------------------------------------------------------
 ; Демонстрационный режим.
 ; Zobrazi Intro - prichod Vortona a Auto-Vortonov.
 ; Ukaze vsetky Zony 30 az 0.
-Demo:		call	Intro		; uvodne intro
-	#if DebugDemoLvl == -1
-		jmp	DemoB
-	#else
-		lxi	h,SprStructV5+8	; zastav posledneho Vortona
-		mvi	m,0
-		lhld	VortonStruct	; adresa struktury aktualneho Vortona
-		mvi	m,0FEh		; deaktivuj ho
-		inr	l
-		inr	l
-		lxi	d,(31-DebugDemoLvl)*0B0h
-		jmp	DemoX
-	#endif
+Demo:		call Intro; uvodne intro
+	if DebugDemoLvl == -1
+		jp DemoB
+	else
+		ld hl,SprStructV5+8	; zastav posledneho Vortona
+		ld (HL),0
+		ld HL,(VortonStruct)	; adresa struktury aktualneho Vortona
+		ld (HL),0FEh		; deaktivuj ho
+		inc l
+		inc l
+		ld de,(31-DebugDemoLvl)*0B0h
+		jp DemoX
+	endif
 
-DemoA:		call	PrepSpr		; priprav sprity
-		call	DrawZone	; vykresli dalsiu Zonu
-DemoB:		lxi	h,TDemoMode	; text "DEMO MODE"
-		call	Print85Text	; zobraz text
+DemoA:		call PrepSpr; priprav sprity
+		call DrawZone	; vykresli dalsiu Zonu
+DemoB:		ld hl,TDemoMode; text "DEMO MODE"
+		call Print85Text	; zobraz text
 
-		mvi	b,40		; 40 krokov
-DemoC:		push	b		; odpamataj pocitadlo
-		call	OneStep		; vykonaj krok
-		pop	b		; obnov pocitadlo
+		ld b,40		; 40 krokov
+DemoC:		push bc; odpamataj pocitadlo
+		call OneStep		; vykonaj krok
+		pop bc		; obnov pocitadlo
 		;in	SysPB		; bol stlaceny Stop/Shift?
-		cma
-		ani	60h
-		rnz			; ano, vrat sa
-		dcr	b
-		jnz	DemoC		; opakuj pre dany pocet framov
+		cpl
+		and 60h
+		ret NZ			; ano, vrat sa
+		dec b
+		jp NZ,DemoC		; opakuj pre dany pocet framov
 
-		lda	ZoneNumber	; cislo zony
-	#if DebugDemoLvl == -1
-		cpi	1Fh		; sme v zone 0?
-	#else
-		cpi	25h
-	#endif
-		jnc	DemoD		; ano, skoc dalej
-		lxi	h,SprStructV5+8	; zastav posledneho Vortona
-		mvi	m,0
-		lhld	VortonStruct	; adresa struktury aktualneho Vortona
-		mvi	m,0FEh		; deaktivuj ho
-		inr	l
-		mov	e,m		; jeho pozicia
-		inr	l
-		mov	d,m
-		xchg			;  do HL
-		lxi	b,0B0h		; posun ho do dalsej miestnosti
-		dad	b
-		xchg
-DemoX:		mov	m,d		; a uloz do struktury
-		dcr	l
-		mov	m,e
-		jmp	DemoA
+		ld A,(ZoneNumber)	; cislo zony
+	if DebugDemoLvl == -1
+		cp 1Fh		; sme v zone 0?
+	else
+		cp 25h
+	endif
+		jp NC,DemoD		; ano, skoc dalej
+		ld hl,SprStructV5+8	; zastav posledneho Vortona
+		ld (HL),0
+		ld HL,(VortonStruct)	; adresa struktury aktualneho Vortona
+		ld (HL),0FEh		; deaktivuj ho
+		inc l
+		ld e,(HL)		; jeho pozicia
+		inc l
+		ld d,(HL)
+		ex DE,HL			;  do HL
+		ld bc,0B0h		; posun ho do dalsej miestnosti
+		add HL,bc
+		ex DE,HL
+DemoX:		ld (HL),d; a uloz do struktury
+		dec l
+		ld (HL),e
+		jp DemoA
 
-DemoD:		lxi	h,InnerScr	; vymaz VO
-		lxi	b,VVO*SVO
-		call	Fill16Z
+DemoD:		ld hl,InnerScr; vymaz VO
+		ld bc,VVO*SVO
+		call Fill16Z
 
-		lxi	h,InnerScr	; vykresli oramovanie
-		lxi	d,InnerScr+(143*SVO)
-		mvi	c,VVO-2		; vyska mriezky -2
-		call	DrawBord
+		ld hl,InnerScr	; vykresli oramovanie
+		ld de,InnerScr+(143*SVO)
+		ld c,VVO-2		; vyska mriezky -2
+		call DrawBord
 
- 		mvi	l,VVO		; vykresli do VRAM
-		lxi	d,InnerScr
-		lxi	b,BaseVramAdr
-		call	DrawInnerScr
+ 		ld l,VVO		; vykresli do VRAM
+		ld de,InnerScr
+		ld bc,BaseVramAdr
+		call DrawInnerScr
 
-		lxi	h,TOneWay	; text "THERE IS ONLY ONE WAY..."
-		call	Print85Text	; zobraz text
-		jmp	WaitAnyKeyT10
+		ld hl,TOneWay	; text "THERE IS ONLY ONE WAY..."
+		call Print85Text	; zobraz text
+		jp WaitAnyKeyT10
 
 ;------------------------------------------------------------------------------
-ShowPanel:	call	Cls			; zmazanie obrazovky
+ShowPanel:	call Cls; zmazanie obrazovky
 
-	#if UsePackedGrp
-		lxi	h,GamePanel		; rozpakovanie panelu
-		lxi	d,0C000h-GamePaneSize
-		call	dzx7
-		lxi	h,BaseVramAdr+(152*64)+1	; vykreslenie panelu
-		lxi	d,0C000h-GamePaneSize
-		lxi	b,HILO(41,35)
-		call	DrawSprite
-	#else
-		lxi	h,BaseVramAdr+(256-184)	; vykreslenie panelu
-		lxi	d,GamePanel
-		lxi	b,HILO(32,34)
-		call	DrawSprite
-	#endif
+	if UsePackedGrp
+		ld hl,GamePanel		; rozpakovanie panelu
+		ld de,0C000h-GamePaneSize
+		call dzx7
+		ld hl,BaseVramAdr+(152*64)+1	; vykreslenie panelu
+		ld de,0C000h-GamePaneSize
+		ld bc, (41<<8)|35
+		call DrawSprite
+	else
+		ld hl,BaseVramAdr+(256-184)	; vykreslenie panelu
+		ld de,GamePanel
+		ld bc,(32<<8)|34
+		call DrawSprite
+	endif
 
-		lxi	d,HILO(24,19)		; AT 24,19
-		lxi	h,HILO(4,21)		; zobraz POWER symboly
-ShowPanelP:	mov	a,l
-		call	Print88
-		inr	l
-		dcr	h
-		jnz	ShowPanelP
+		ld de, (24<<8)|19
+		ld hl, (4<<8)|21
+ShowPanelP:	ld a,l
+		call Print88
+		inc l
+		dec h
+		jp NZ,ShowPanelP
 
-		lxi	d,HILO(26,19)		; AT 26,19
-		lxi	h,HILO(4,25)		; zobraz casove jednotky
-ShowPanelT:	mov	a,l
-		call	Print88
-		dcr	h
-		jnz	ShowPanelT
+		ld de, (26<<8)|19
+		ld hl, (4<<8)|25
+ShowPanelT:	ld a,l
+		call Print88
+		dec h
+		jp NZ,ShowPanelT
 
-		call	PrtScore		; zobraz Score a HiScore
-		jmp	PrtHiScore
+		call PrtScore		; zobraz Score a HiScore
+		jp PrtHiScore
 
 ;------------------------------------------------------------------------------
 ; Начальная анимация
 ; - iniciaizacia premennych
 ; - zobrazenie panelu a Zony 30
 ; - prichod Vortonov a Lasetronu
-Intro:		lxi	h,BackupVars	; inicializuj pociatocne hodnoty
-		lxi	d,Vars		; premennych
-		mvi	b,VarsLen
-		call	Copy8
-		call	ShowPanel	; zmaz obr. a zobraz dolny panel
-		call	InitSpr		; inicializuj sprity
-		call	PrepSpr		; priprav sprity
-		call	DrawZone	; vykresli Zonu 30
-		mvi	a,0FFh		; vyprazdni zoznam aktivnych spritov
-		sta	SprPrepList
+Intro:		ld hl,BackupVars; inicializuj pociatocne hodnoty
+		ld de,Vars		; premennych
+		ld b,VarsLen
+		call Copy8
+		call ShowPanel	; zmaz obr. a zobraz dolny panel
+		call InitSpr		; inicializuj sprity
+		call PrepSpr		; priprav sprity
+		call DrawZone	; vykresli Zonu 30
+		ld a,0FFh		; vyprazdni zoznam aktivnych spritov
+		ld (SprPrepList),A
 
-		mvi	a,1		; aktivuj pohyb hlavneho Vortona
-		sta	SprStructV1+8
-		xra	a		; ziadna zmena rychlosti a otocenia
-		mvi	b,16		; 16 krokov
-		call	AutoStep	; vykonaj
-IntroA:		mvi	a,5		; FLRUD - zabrzdi Vortona a otacaj doprava
-		mvi	b,1		; jeden krok
-		call	AutoStep	; vykonaj
-		sui	6		; otacaj Vortona, kym nebude otoceny
-		jnz	IntroA		;  na Sever
-		inr	a		; aktivuj pohyb hlavneho Vortona
-		sta	SprStructV1+8
-		xra	a		; ziadna zmena rychlosti a otocenia
-		mvi	b,14		; 14 krokov
-		call	AutoStep	; vykonaj
-IntroB:		mvi	a,4		; FLRUD - otacaj Vortona doprava
-		mvi	b,1		; 1 krok
-		call	AutoStep	; vykonaj
-		ana	a		; otacaj, kym nebude otoceny na vychod
-		jnz	IntroB
-IntroC:		mvi	a,5		; FLRUD - zabrzdi Vortona a otacaj doprava
-		mvi	b,1		; 1 krok
-		call	AutoStep	; vykonaj
-		cpi	3		; otacaj Vortona, kym nebude otoceny
-		jnz	IntroC		;  na Juho-Zapad
-		lxi	h,SprStructV2+8	; aktivuj pohyb Auto-Vortonov
-		lxi	d,16
-		lxi	b,HILO(4,1)	; 4 Auto-Vortoni
-IntroD:		mov	m,c
-		dad	d
-		dcr	b
-		jnz	IntroD
-		xra	a		; ziadna zmena rychlosti a otocenia
-		mvi	b,39		; 39 krokov
-		call	AutoStep	; vykonaj
-		lxi	h,SprStructV2+7 ; zmen smer pohybu Auto-Vortonov
-		lxi	d,16
-		lxi	b,HILO(7,1)
-		mov	m,b		; Severo-Vychod
-		dad	d
-		mov	m,c		; Juho-Vychod
-		dad	d
-		mov	m,b		; Severo-Vychod
-		dad	d
-		mov	m,c		; Juho-Vychod
-		xra	a		; ziadna zmena rychlosti a otocenia
-		mvi	b,12		; 12 krokov
-		call	AutoStep	; vykonaj
-		lxi	h,SprStructV2+7 ; zastav Auto-Vortonov a nastav smer 
-		lxi	d,15		;  pohybu na Vychod
-		mvi	b,4
-IntroE:		mov	m,d		; smer na Vychod
-		inx	h
-		mov	m,d		; zastav pohyb
-		dad	d
-		dcr	b
-		jnz	IntroE
-IntroF:		mvi	a,9		; FLRUD - zabrzdi Vortona a otacaj dolava
-		mvi	b,1		; 1 krok
-		call	AutoStep	; vykonaj
-		dcr	a		; otacaj Vortona, kym nebude otoceny
-		jnz	IntroF		;  na Juho-Vychod
-		inr	a		; aktivuj pohyb hlavneho Vortona
-		sta	SprStructV1+8
-		xra	a		; ziadna zmena rychlosti a otocenia
-		mvi	b,32		; 32 krokov
-		call	AutoStep	; vykonaj
-IntroG:		mvi	a,9		; FLRUD - zabrzdi Vortona a otacaj dolava
-		mvi	b,1		; 1 krok
-		call	AutoStep	; vykonaj
-		ana	a		; otacaj Vortona, kym nebude otoceny
-		jnz	IntroG		;  na Vychod
-		lxi	h,SprStructV2+8	; aktivuj pohyb Auto-Vortonov
-		lxi	d,16
-		lxi	b,HILO(4,1)	; 4 Auto-Vortoni
-IntroH:		mov	m,c
-		dad	d
-		dcr	b
-		jnz	IntroH
+		ld a,1		; aktivuj pohyb hlavneho Vortona
+		ld (SprStructV1+8),A
+		xor a		; ziadna zmena rychlosti a otocenia
+		ld b,16		; 16 krokov
+		call AutoStep	; vykonaj
+IntroA:		ld a,5; FLRUD - zabrzdi Vortona a otacaj doprava
+		ld b,1		; jeden krok
+		call AutoStep	; vykonaj
+		sub 6		; otacaj Vortona, kym nebude otoceny
+		jp NZ,IntroA		;  na Sever
+		inc a		; aktivuj pohyb hlavneho Vortona
+		ld (SprStructV1+8),A
+		xor a		; ziadna zmena rychlosti a otocenia
+		ld b,14		; 14 krokov
+		call AutoStep	; vykonaj
+IntroB:		ld a,4; FLRUD - otacaj Vortona doprava
+		ld b,1		; 1 krok
+		call AutoStep	; vykonaj
+		and a		; otacaj, kym nebude otoceny na vychod
+		jp NZ,IntroB
+IntroC:		ld a,5; FLRUD - zabrzdi Vortona a otacaj doprava
+		ld b,1		; 1 krok
+		call AutoStep	; vykonaj
+		cp 3		; otacaj Vortona, kym nebude otoceny
+		jp NZ,IntroC		;  na Juho-Zapad
+		ld hl,SprStructV2+8	; aktivuj pohyb Auto-Vortonov
+		ld de,16
+		ld bc, (4<<8)|1
+IntroD:		ld (HL),c
+		add HL,de
+		dec b
+		jp NZ,IntroD
+		xor a		; ziadna zmena rychlosti a otocenia
+		ld b,39		; 39 krokov
+		call AutoStep	; vykonaj
+		ld hl,SprStructV2+7 ; zmen smer pohybu Auto-Vortonov
+		ld de,16
+		ld bc, (7<<8)|1
+		ld (HL),b		; Severo-Vychod
+		add HL,de
+		ld (HL),c		; Juho-Vychod
+		add HL,de
+		ld (HL),b		; Severo-Vychod
+		add HL,de
+		ld (HL),c		; Juho-Vychod
+		xor a		; ziadna zmena rychlosti a otocenia
+		ld b,12		; 12 krokov
+		call AutoStep	; vykonaj
+		ld hl,SprStructV2+7 ; zastav Auto-Vortonov a nastav smer
+		ld de,15		;  pohybu na Vychod
+		ld b,4
+IntroE:		ld (HL),d; smer na Vychod
+		inc hl
+		ld (HL),d		; zastav pohyb
+		add HL,de
+		dec b
+		jp NZ,IntroE
+IntroF:		ld a,9; FLRUD - zabrzdi Vortona a otacaj dolava
+		ld b,1		; 1 krok
+		call AutoStep	; vykonaj
+		dec a		; otacaj Vortona, kym nebude otoceny
+		jp NZ,IntroF		;  na Juho-Vychod
+		inc a		; aktivuj pohyb hlavneho Vortona
+		ld (SprStructV1+8),A
+		xor a		; ziadna zmena rychlosti a otocenia
+		ld b,32		; 32 krokov
+		call AutoStep	; vykonaj
+IntroG:		ld a,9; FLRUD - zabrzdi Vortona a otacaj dolava
+		ld b,1		; 1 krok
+		call AutoStep	; vykonaj
+		and a		; otacaj Vortona, kym nebude otoceny
+		jp NZ,IntroG		;  na Vychod
+		ld hl,SprStructV2+8	; aktivuj pohyb Auto-Vortonov
+		ld de,16
+		ld bc, (4<<8)|1
+IntroH:		ld (HL),c
+		add HL,de
+		dec b
+		jp NZ,IntroH
 
-		jmp	PrepSprZ	; priprav sprity
+		jp PrepSprZ	; priprav sprity
 
 ;------------------------------------------------------------------------------
 ; Автоматический шаг Vorton в нужном направлении.
 ; I: A=maska smeru/otacania Vortona, B=pocet krokov
 ; O: A=aktualne otocenie Vortona
-AutoStep:	sta	KbdState	; - FLRUD
-AutoStepL:	push	b		; odpamataj pocitadlo
-		call	UndrawSpr	; zmaz sprity z VO2
-		call	ProcMove	; spracuj posuny podla stavu klaves
-		call	ProcSpr		; spracuj pohyb spritov a ich kolizie
-		call	SortSpr		; zorad sprity podla IZO hlbky
-		call	DrawSpr		; vykresli sprity
-		call	RedrawChangesDI	; prekresli zmeny
-		call	LTronMove	; zobraz posun LaserTronu na panely
-		call	Sound		; spracuj zvuky
-		pop	b		; obnov pocitadlo
-		dcr	b
-		jnz	AutoStepL	; opakuj pre pozadovany pocet krokov
-		lda	SprStructV1+7	; aktualne otocenie Vortona do A
+AutoStep:	ld (KbdState),A; - FLRUD
+AutoStepL:	push bc; odpamataj pocitadlo
+		call UndrawSpr	; zmaz sprity z VO2
+		call ProcMove	; spracuj posuny podla stavu klaves
+		call ProcSpr		; spracuj pohyb spritov a ich kolizie
+		call SortSpr		; zorad sprity podla IZO hlbky
+		call DrawSpr		; vykresli sprity
+		call RedrawChangesDI	; prekresli zmeny
+		call LTronMove	; zobraz posun LaserTronu na panely
+		call Sound		; spracuj zvuky
+		pop bc		; obnov pocitadlo
+		dec b
+		jp NZ,AutoStepL	; opakuj pre pozadovany pocet krokov
+		ld A,(SprStructV1+7)	; aktualne otocenie Vortona do A
 		ret
 
 ;------------------------------------------------------------------------------
-OneStep:	call	UndrawSpr	; zmaz sprity z VO2
-		call	ProcSeq		; spracuj zmeny sekvencii spritov
-		call	ProcSpr		; spracuj pohyb spritov a ich kolizie
-		call	SortSpr		; zorad sprity podla IZO hlbky
-		call	DrawSpr		; vykresli sprity
-		call	RedrawChangesDI	; prekresli zmeny
-		call	LTronMove	; zobraz posun LaserTronu na panely
-		jmp	Sound		; spracuj zvuky
+OneStep:	call UndrawSpr; zmaz sprity z VO2
+		call ProcSeq		; spracuj zmeny sekvencii spritov
+		call ProcSpr		; spracuj pohyb spritov a ich kolizie
+		call SortSpr		; zorad sprity podla IZO hlbky
+		call DrawSpr		; vykresli sprity
+		call RedrawChangesDI	; prekresli zmeny
+		call LTronMove	; zobraz posun LaserTronu na panely
+		jp Sound		; spracuj zvuky
 
 ;------------------------------------------------------------------------------
-LTronZone0:	mvi	b,5		; deaktivuj vsetkych zostavajucich
-		lxi	h,SprListVL	; Vortonov
-DeactVortA:	mov	a,m		; je to aktivny Vorton?
-		cpi	0FEh
-		jnc	DeactVortB	; nie, skoc dalej
-		mvi	a,5
-		add	l
-		mov	l,a		; (5)
-		mvi	m,80h		; nastav sprite SprBlast
-		inr	l		; (6)
-		inr	l		; (7)
-		inr	l		; (8)
-		mov	a,m
-		ori	80h		; deaktivuj ho - vybuchne
-		mov	m,a
-		mvi	a,-8
-		add	l
-		mov	l,a		; (0)
-		lxi	d,SndType	; premenna pre naplanovanie zvuku
-		ldax	d
-		ori	1<<6		; "naplanuj" zvukovy efekt vybuch
-		stax	d
-		push	b
-		push	h
-		mvi	b,100		; zvys Score o 1000 bodov
-		call	IncScore
-		pop	h
-		pop	b
-DeactVortB:	lxi	d,16		; posun na dalsiu strukturu
-		dad	d
-		dcr	b
-		jnz	DeactVortA	; opakuj pre vsetkych Vortonov
-		mvi	a,8
-		add	l
-		mov	l,a		; (8)
-		mov	m,b		; aktivuj Lasertron
-		mvi	b,24		; 24 krokov
-		xra	a		; ziadna zmena rychlosti a otocenia
-		call	AutoStep	; vykonaj
-		lxi	h,SprStructLT	; nastav Lasertron
-		shld	VortonStruct	; ako aktualny Vorton sprite
-		mvi	b,15		; 15 krokov
-		xra	a		; ziadna zmena rychlosti a otocenia
-		call	AutoStep	; vykonaj
+LTronZone0:	ld b,5; deaktivuj vsetkych zostavajucich
+		ld hl,SprListVL	; Vortonov
+DeactVortA:	ld a,(HL); je to aktivny Vorton?
+		cp 0FEh
+		jp NC,DeactVortB	; nie, skoc dalej
+		ld a,5
+		add A,l
+		ld l,a		; (5)
+		ld (HL),80h		; nastav sprite SprBlast
+		inc l		; (6)
+		inc l		; (7)
+		inc l		; (8)
+		ld a,(HL)
+		or 80h		; deaktivuj ho - vybuchne
+		ld (HL),a
+		ld a,-8
+		add A,l
+		ld l,a		; (0)
+		ld de,SndType	; premenna pre naplanovanie zvuku
+		ld A,(de)
+		or 1<<6		; "naplanuj" zvukovy efekt vybuch
+		ld (de),A
+		push bc
+		push hl
+		ld b,100		; zvys Score o 1000 bodov
+		call IncScore
+		pop hl
+		pop bc
+DeactVortB:	ld de,16; posun na dalsiu strukturu
+		add HL,de
+		dec b
+		jp NZ,DeactVortA	; opakuj pre vsetkych Vortonov
+		ld a,8
+		add A,l
+		ld l,a		; (8)
+		ld (HL),b		; aktivuj Lasertron
+		ld b,24		; 24 krokov
+		xor a		; ziadna zmena rychlosti a otocenia
+		call AutoStep	; vykonaj
+		ld hl,SprStructLT	; nastav Lasertron
+		ld (VortonStruct),HL	; ako aktualny Vorton sprite
+		ld b,15		; 15 krokov
+		xor a		; ziadna zmena rychlosti a otocenia
+		call AutoStep	; vykonaj
 
 		; zmazanie hornej casti panelu s cislami Vortonov
-		lxi	h,BaseVramAdr+(155*64)+9
-		lxi	d,64-12
-		mvi	c,5		; vyska 5 mikroriadkov
-CleanPanelA:	mvi	b,12		; sirka 12 znakovych stlpcov
-CleanPanelB:	mov	m,d		; vymaz
-		inx	h
-		dcr	b
-		jnz	CleanPanelB	; opakuj
-		dad	d		; prejdi na dalsi mikroriadok
-		dcr	c		; opakuj pre vsetky mikroriadky
-		jnz	CleanPanelA
+		ld hl,BaseVramAdr+(155*64)+9
+		ld de,64-12
+		ld c,5		; vyska 5 mikroriadkov
+CleanPanelA:	ld b,12; sirka 12 znakovych stlpcov
+CleanPanelB:	ld (HL),d; vymaz
+		inc hl
+		dec b
+		jp NZ,CleanPanelB	; opakuj
+		add HL,de		; prejdi na dalsi mikroriadok
+		dec c		; opakuj pre vsetky mikroriadky
+		jp NZ,CleanPanelA
 
 		; skrytie Lasertronu na Panely
-		lxi	h,BaseVramAdr+(173*64)+21
-		lxi	d,64-2
-		mvi	c,10		; vyska 10 mikroriadkov
-CleanPanelC:	mov	m,d		; vymaz
-		inx	h
-		mov	m,d
-		inx	h
-		mov	m,d
-		dad	d		; prejdi na dalsi mikroriadok
-		dcr	c		; opakuj pre vsetky mikroriadky
-		jnz	CleanPanelC
+		ld hl,BaseVramAdr+(173*64)+21
+		ld de,64-2
+		ld c,10		; vyska 10 mikroriadkov
+CleanPanelC:	ld (HL),d; vymaz
+		inc hl
+		ld (HL),d
+		inc hl
+		ld (HL),d
+		add HL,de		; prejdi na dalsi mikroriadok
+		dec c		; opakuj pre vsetky mikroriadky
+		jp NZ,CleanPanelC
 
 		; zobrazenie nadpisu "LASERTRON .ACTIVATED."
-		lxi	h,BaseVramAdr+(163*64)+11
-		lxi	d,LtronAct
-		lxi	b,HILO(10,13)
-		call	DrawSprite
+		ld hl,BaseVramAdr+(163*64)+11
+		ld de,LtronAct
+		ld bc, (10<<8)|13
+		call DrawSprite
 
 		; zvuk pri aktivacii Lasertronu
-		lxi	d,1E28h
-		lxi	h,0204h
-		call	SoundW		; zahraj si...
+		ld de,1E28h
+		ld hl,0204h
+		call SoundW		; zahraj si...
 
 		; posun Lasertronu az na koniec Zony 0
-LTronZone0E:	lxi	h,SprStructLT+8 ; nastav rychlost Lasertronu
-		mvi	m,1		; na 1
-		call	OneStep		; vykonaj jeden krok
-		lda	ZoneNumberT	; uz je Lasertron na konci Zony 0?
-		cpi	36
-		jc	LTronZone0E	; ak nie, posuvaj ho dalej
+LTronZone0E:	ld hl,SprStructLT+8; nastav rychlost Lasertronu
+		ld (HL),1		; na 1
+		call OneStep		; vykonaj jeden krok
+		ld A,(ZoneNumberT)	; uz je Lasertron na konci Zony 0?
+		cp 36
+		jp C,LTronZone0E	; ak nie, posuvaj ho dalej
 
 		; otvorenie Lasertronu
-LTronOpen:	mvi	b,20		; 20 krokov
-		xra	a		; ziadna zmena rychlosti a otocenia
-		call	AutoStep	; vykonaj
-		mvi	c,3		; 3 fazy otvorenia Lasertronu
-LTronOpenA:	mvi	b,3		; 3 kroky
-LTronOpenB:	push	b
-		call	OneStep		; vykonaj krok
-		pop	b
-		dcr	b
-		jnz	LTronOpenB
-		lxi	h,SprStructLT+5	; sekvencia spritu Lasertron
-		inr	m		; posun sa na dalsiu sekvenciu
-		inr	m
-		dcr	c		; opakuj kym nie je Lasertron pripraveny
-		jnz	LTronOpenA
-		mvi	b,20		; 20 krokov
-LTronShotA:	push	b
-		call	OneStep		; vykonaj krok
-		pop	b
-		dcr	b
-		jnz	LTronShotA
+LTronOpen:	ld b,20; 20 krokov
+		xor a		; ziadna zmena rychlosti a otocenia
+		call AutoStep	; vykonaj
+		ld c,3		; 3 fazy otvorenia Lasertronu
+LTronOpenA:	ld b,3; 3 kroky
+LTronOpenB:	push bc
+		call OneStep		; vykonaj krok
+		pop bc
+		dec b
+		jp NZ,LTronOpenB
+		ld hl,SprStructLT+5	; sekvencia spritu Lasertron
+		inc (HL)		; posun sa na dalsiu sekvenciu
+		inc (HL)
+		dec c		; opakuj kym nie je Lasertron pripraveny
+		jp NZ,LTronOpenA
+		ld b,20		; 20 krokov
+LTronShotA:	push bc
+		call OneStep		; vykonaj krok
+		pop bc
+		dec b
+		jp NZ,LTronShotA
 
 		; vystrel Lasertronu
-		lxi	d,16		; offset na dalsiu struturu
-		lxi	h,SprStructS1+5	; sekvencia spritu Strela
-		mvi	b,3		; vsetky 3 strely budu SprLasShot1
-LTronShotB:	mvi	m,20h		; zapis
-		dad	d		; dalsia strela
-		dcr	b
-		jnz	LTronShotB
-		mvi	a,6		; inicializacna hodnota pre
-		sta	ShotTime+1	;   cas letu pre tuto Strelu
-		mvi	b,60		; 60 krokov
-		mvi	a,16		; Fire
-		call	AutoStep	; vykonaj - vystrel Lasertron Strely
-		mvi	b,8		; 8 krokov
-		xra	a		; ziadna zmena smeru
-		call	AutoStep	; vykonaj
-		mvi	a,22		; vrat povodnu hodnotu pre cas letu Strely
-		sta	ShotTime+1
+		ld de,16		; offset na dalsiu struturu
+		ld hl,SprStructS1+5	; sekvencia spritu Strela
+		ld b,3		; vsetky 3 strely budu SprLasShot1
+LTronShotB:	ld (HL),20h; zapis
+		add HL,de		; dalsia strela
+		dec b
+		jp NZ,LTronShotB
+		ld a,6		; inicializacna hodnota pre
+		ld (ShotTime+1),A	;   cas letu pre tuto Strelu
+		ld b,60		; 60 krokov
+		ld a,16		; Fire
+		call AutoStep	; vykonaj - vystrel Lasertron Strely
+		ld b,8		; 8 krokov
+		xor a		; ziadna zmena smeru
+		call AutoStep	; vykonaj
+		ld a,22		; vrat povodnu hodnotu pre cas letu Strely
+		ld (ShotTime+1),A
 
 		; "vyparenie" Kozmickej lode
-		lxi	d,InnerScr+(88*SVO)+14 ; адрес источника VO - tam je cista mriezka
-		lxi	h,InnerScr+14	; адрес назначения VO - tam je "Kozmicka" lod
-		push	h
-		lxi	h,VanishData	; data pre "vyparenie" Kozmickej lode
-		mov	a,m		; maska mazania dat z VO
-		inx	h
-		xthl			; data na zasobnik, prvy ukazatel nazad do HL
-VanishShipA:	cma			; invertuj ju a uloz na neskor
-		sta	VanishShipC+1
-		push	h		; odpamataj ukazatele
-		push	d
-		mvi	c,22		; vyska 22*4 mikroriadkov 
-VanishShipB:	push	d
-		mvi	b,29		; sirka 29 bytov
-VanishShipC:	mvi	a,0		; maska
-		ana	m		; aplikuj masku na cielovy obsah
-		xchg
-		ora	m		; pridaj zdrojove data
-		xchg
-		mov	m,a		; vysledok uloz do VO
-		inx	h		; posun sa na dalsi znakovy stlpec
-		inx	d
-		dcr	b
-		jnz	VanishShipC	; opakuj pre celu sirku
-		mov	a,c
-		mvi	c,(4*SVO)-29
-		dad	b		; posun cielovu adresu o 4 mikroriadky
-		xchg
-		pop	h
-		mvi	c,4*SVO
-		rrc
-		rlc
-		jnc	VanishShipE
-		lxi	b,-(4*SVO)
-VanishShipE:	dad	b		; posun zdrojovu adresu o 4 mikroriadky hore/dole
-		xchg
-		mov	c,a
-		dcr	c		; opakuj pre celu vysku
-		jnz	VanishShipB
+		ld de,InnerScr+(88*SVO)+14 ; адрес источника VO - tam je cista mriezka
+		ld hl,InnerScr+14	; адрес назначения VO - tam je "Kozmicka" lod
+		push hl
+		ld hl,VanishData	; data pre "vyparenie" Kozmickej lode
+		ld a,(HL)		; maska mazania dat z VO
+		inc hl
+		ex (SP),HL			; data na zasobnik, prvy ukazatel nazad do HL
+VanishShipA:	cpl; invertuj ju a uloz na neskor
+		ld (VanishShipC+1),A
+		push hl		; odpamataj ukazatele
+		push de
+		ld c,22		; vyska 22*4 mikroriadkov
+VanishShipB:	push de
+		ld b,29		; sirka 29 bytov
+VanishShipC:	ld a,0; maska
+		and (HL)		; aplikuj masku na cielovy obsah
+		ex DE,HL
+		or (HL)		; pridaj zdrojove data
+		ex DE,HL
+		ld (HL),a		; vysledok uloz do VO
+		inc hl		; posun sa na dalsi znakovy stlpec
+		inc de
+		dec b
+		jp NZ,VanishShipC	; opakuj pre celu sirku
+		ld a,c
+		ld c,(4*SVO)-29
+		add HL,bc		; posun cielovu adresu o 4 mikroriadky
+		ex DE,HL
+		pop hl
+		ld c,4*SVO
+		rrca
+		rlca
+		jp NC,VanishShipE
+		ld bc,-(4*SVO)
+VanishShipE:	add HL,bc; posun zdrojovu adresu o 4 mikroriadky hore/dole
+		ex DE,HL
+		ld c,a
+		dec c		; opakuj pre celu vysku
+		jp NZ,VanishShipB
 
 		; dopln chybajuci horny okraj Zony
-		lxi	h,InnerScr+14
-		lxi	b,HILO(28,3Fh)
-VanishShipD:	mov	m,c
-		inx	h
-		dcr	b
-		jnz	VanishShipD
-		mvi	m,0Fh
+		ld hl,InnerScr+14
+		ld bc, (28<<8)|3Fh
+VanishShipD:	ld (HL),c
+		inc hl
+		dec b
+		jp NZ,VanishShipD
+		ld (HL),0Fh
 
 		; vykreslenie kroku "vyparenia" Kozmickej lode
- 		mvi	l,11*8
-		lxi	d,InnerScr
-		lxi	b,BaseVramAdr
-		call	DrawInnerScr
+ 		ld l,11*8
+		ld de,InnerScr
+		ld bc,BaseVramAdr
+		call DrawInnerScr
 
 		; zvuk po jednom kroku "vyparenia" Kozmickej lode
-		lxi	h,SoundI
-		mvi	m,0A2h
-		mvi	c,0Ah
-		lxi	d,7F14h
-		call	SoundD
+		ld hl,SoundI
+		ld (HL),0A2h
+		ld c,0Ah
+		ld de,7F14h
+		call SoundD
 
-		pop	d		; obnov ukazatele do VO
-		pop	h
+		pop de		; obnov ukazatele do VO
+		pop hl
 
 		; dalsi krok "vyparenia" Kozmickej lode
-		xthl
-		mov	c,m		; offset (krok) do BC
-		inx	h
-		mov	b,m
-		inx	h
-		mov	a,m
-		inx	h
-		xthl
-		dad	b		; pripocitaj k zdrojovemu ukazatelu
-		xchg
-		dad	b		; pripocitaj k cielovemu ukazatelu
-		xchg
-		ana	a		; koniec zoznamu?
-		jnz	VanishShipA	; nie, pokracuj
-		pop	h
+		ex (SP),HL
+		ld c,(HL)		; offset (krok) do BC
+		inc hl
+		ld b,(HL)
+		inc hl
+		ld a,(HL)
+		inc hl
+		ex (SP),HL
+		add HL,bc		; pripocitaj k zdrojovemu ukazatelu
+		ex DE,HL
+		add HL,bc		; pripocitaj k cielovemu ukazatelu
+		ex DE,HL
+		and a		; koniec zoznamu?
+		jp NZ,VanishShipA	; nie, pokracuj
+		pop hl
 
 		; male zdrzanie
-		mvi	c,0E0h
-Wait1:		mvi	b,0E0h
-Wait2:		dcr	b
-		jnz	Wait2
-		dcr	c
-		jnz	Wait1
+		ld c,0E0h
+Wait1:		ld b,0E0h
+Wait2:		dec b
+		jp NZ,Wait2
+		dec c
+		jp NZ,Wait1
 
 		; vymazanie nadpisu LASERTRON ACTIVATED
-		lxi	h,BaseVramAdr+(163*64)+11
-		lxi	d,64-10
-		mvi	c,13		; vyska 13 mikroriadkov
-CleanLabelA:	mvi	b,10		; sirka 10 znakovych stlpcov
-CleanLabelB:	mov	m,d		; vymaz
-		inx	h
-		dcr	b
-		jnz	CleanLabelB	; opakuj
-		dad	d		; prejdi na dalsi mikroriadok
-		dcr	c		; opakuj pre vsetky mikroriadky
-		jnz	CleanLabelA
+		ld hl,BaseVramAdr+(163*64)+11
+		ld de,64-10
+		ld c,13		; vyska 13 mikroriadkov
+CleanLabelA:	ld b,10; sirka 10 znakovych stlpcov
+CleanLabelB:	ld (HL),d; vymaz
+		inc hl
+		dec b
+		jp NZ,CleanLabelB	; opakuj
+		add HL,de		; prejdi na dalsi mikroriadok
+		dec c		; opakuj pre vsetky mikroriadky
+		jp NZ,CleanLabelA
 
 		; uzatvorenie Lasertronu
-		lxi	h,SprPrepList	; vyprazdni zoznam pripravenych spritov
-		mvi	m,0FFh
-		mvi	c,3		; 3 fazy uzatvorenia Lasertronu
-LTronCloseA:	mvi	b,3		; 3 kroky
-LTronCloseB:	push	b
-		call	OneStep		; vykonaj krok
-		pop	b
-		dcr	b
-		jnz	LTronCloseB
-		lxi	h,SprStructLT+5	; sekvencia spritu Lasertron
-		dcr	m		; posun sa na dalsiu sekvenciu
-		dcr	m
-		dcr	c		; opakuj kym nie je Lasertron pripraveny
-		jnz	LTronCloseA
-		mvi	b,20		; 20 krokov
-LTronCloseC:	push	b
-		call	OneStep		; vykonaj krok
-		pop	b
-		dcr	b
-		jnz	LTronCloseC
+		ld hl,SprPrepList	; vyprazdni zoznam pripravenych spritov
+		ld (HL),0FFh
+		ld c,3		; 3 fazy uzatvorenia Lasertronu
+LTronCloseA:	ld b,3; 3 kroky
+LTronCloseB:	push bc
+		call OneStep		; vykonaj krok
+		pop bc
+		dec b
+		jp NZ,LTronCloseB
+		ld hl,SprStructLT+5	; sekvencia spritu Lasertron
+		dec (HL)		; posun sa na dalsiu sekvenciu
+		dec (HL)
+		dec c		; opakuj kym nie je Lasertron pripraveny
+		jp NZ,LTronCloseA
+		ld b,20		; 20 krokov
+LTronCloseC:	push bc
+		call OneStep		; vykonaj krok
+		pop bc
+		dec b
+		jp NZ,LTronCloseC
 
 		; vybuch Lasertronu
-		lxi	h,SprStructLT+5 ; sekvencia spritu Lasertron
-		mvi	m,80h		; nastav sprite SprBlast
-		mvi	b,190		; 190 krokov
-LTonBlastA:	push	b
-		lxi	h,SprStructLT+8	; rychlost LT
-		mvi	m,80h		; nastav flag - sprite prave vybuchuje
-		call	OneStep		; vykonaj krok
-		pop	b
-		mov	a,b		; ak ma pocitadlo prave hodnotu 135
-		cpi	135
-		jnz	LTonBlastB
-		push	b
-		lxi	h,TPrepare	; zobraz text "PREPARE YOURSELF ..."
-		call	Print85Text	; zobraz text
-		pop	b
-LTonBlastB:	dcr	b
-		jnz	LTonBlastA	; a opakuj dany pocet krokov
+		ld hl,SprStructLT+5 ; sekvencia spritu Lasertron
+		ld (HL),80h		; nastav sprite SprBlast
+		ld b,190		; 190 krokov
+LTonBlastA:	push bc
+		ld hl,SprStructLT+8	; rychlost LT
+		ld (HL),80h		; nastav flag - sprite prave vybuchuje
+		call OneStep		; vykonaj krok
+		pop bc
+		ld a,b		; ak ma pocitadlo prave hodnotu 135
+		cp 135
+		jp NZ,LTonBlastB
+		push bc
+		ld hl,TPrepare	; zobraz text "PREPARE YOURSELF ..."
+		call Print85Text	; zobraz text
+		pop bc
+LTonBlastB:	dec b
+		jp NZ,LTonBlastA	; a opakuj dany pocet krokov
 
 		; zvysenie rychlosti pohyblivych spritov
-		lda	SpeedLevel	; uroven rychlosti
-		cpi	02h		; ak je uz >=2
-		jnc	PlayAgain	; nezvysuj ju dalej a skoc na zaciatok hry
-		inr	a		; +1
-		sta	SpeedLevel	; a uloz novu uroven
-		lxi	h,SprList+6	; adresa zoznamu spritov
-		lxi	d,16		; offset na dalsiu strukturu
-IncSpeedA:	mov	a,m		; typ spritu
-		ani	0Fh		; ponechaj zakladny kod
-		cpi	5		; vybranym pohyblivym spritom
-		jnc	IncSpeedB
-		inx	h		; (7)
-		inx	h		; (8)
-		inr	m		; zvys rychlost
-		dcx	h		; (7)
-		dcx	h		; (6)
-IncSpeedB:	dad	d		; dalsi sprite
-		mov	a,h		; az po Vortonov
-		cpi	SprListVL/256
-		jc	IncSpeedA
+		ld A,(SpeedLevel)	; uroven rychlosti
+		cp 02h		; ak je uz >=2
+		jp NC,PlayAgain	; nezvysuj ju dalej a skoc na zaciatok hry
+		inc a		; +1
+		ld (SpeedLevel),A	; a uloz novu uroven
+		ld hl,SprList+6	; adresa zoznamu spritov
+		ld de,16		; offset na dalsiu strukturu
+IncSpeedA:	ld a,(HL); typ spritu
+		and 0Fh		; ponechaj zakladny kod
+		cp 5		; vybranym pohyblivym spritom
+		jp NC,IncSpeedB
+		inc hl		; (7)
+		inc hl		; (8)
+		inc (HL)		; zvys rychlost
+		dec hl		; (7)
+		dec hl		; (6)
+IncSpeedB:	add HL,de; dalsi sprite
+		ld a,h		; az po Vortonov
+		cp SprListVL/256
+		jp C,IncSpeedA
 
-		jmp	PlayAgain	; skoc na zaciatok hry
+		jp PlayAgain	; skoc na zaciatok hry
 
 ;------------------------------------------------------------------------------
 ; Обработка смещения Vorton, выстрел по нажатию клавиш
-ProcMove:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
-		mvi	a,8		; posun sa na Rychlost
-		add	l
-		mov	l,a		; (8) - rychlost pohybu
-		mov	a,m		; do A
-		ora	a		; je Vorton aktivny?
-		jm	ProcSeq		; nie, skoc dalej
-		xchg			; ukazatel na Rychlost do DE
-		lda	KbdState	; - FLRUD
-		mov	b,a		; stav Kbd do B
+ProcMove:	ld HL,(VortonStruct); adresa struktury aktualneho Vortona
+		ld a,8		; posun sa na Rychlost
+		add A,l
+		ld l,a		; (8) - rychlost pohybu
+		ld a,(HL)		; do A
+		or a		; je Vorton aktivny?
+		jp M,ProcSeq		; nie, skoc dalej
+		ex DE,HL			; ukazatel na Rychlost do DE
+		ld A,(KbdState)	; - FLRUD
+		ld b,a		; stav Kbd do B
 
 		; ускорение / замедление Vorton
-		lxi	h,ChngSpdDly	; premenna pre zdrzanie pred zmenou rychlosti
-		dcr	m		; zniz pocitadlo
-		jp	ProcMoveC	; ak nie je nulove, skoc dalej
-		inr	m
-		mov	a,b
-		rrc			; spomalenie?
-		jnc	ProcMoveA	; nie, skoc dalej
-		ldax	d		; (8) - скорость
-		dcr	a		; zniz rychlost
-		jm	ProcMoveC	; ak uz bola rychlost nulova, skoc dalej
-		stax	d		; (8) - uloz novu rychlost
-		jmp	ProcMoveB	; skoc dalej
+		ld hl,ChngSpdDly	; premenna pre zdrzanie pred zmenou rychlosti
+		dec (HL)		; zniz pocitadlo
+		jp P,ProcMoveC	; ak nie je nulove, skoc dalej
+		inc (HL)
+		ld a,b
+		rrca			; spomalenie?
+		jp NC,ProcMoveA	; nie, skoc dalej
+		ld A,(de)		; (8) - скорость
+		dec a		; zniz rychlost
+		jp M,ProcMoveC	; ak uz bola rychlost nulova, skoc dalej
+		ld (de),A		; (8) - uloz novu rychlost
+		jp ProcMoveB	; skoc dalej
 
-ProcMoveA:	mov	a,b		; zrychlenie?
-		ani	2
-		jz	ProcMoveC	; nie, skoc dalej
-		ldax	d		; (8) - скорость
-		inr	a		; zvys rychlost
-		cpi	3		; ak je uz maximalna rychlost (2 !!),
-		jnc	ProcMoveC	; skoc dalej
-		stax	d		; (8) - uloz novu rychlost
-ProcMoveB:	dcr	a		; je rychlost 1 ?
-		jnz	ProcMoveC	; nie, skoc dalej
-		mvi	m,7		; ano, inic. zdrzanie pre dalsiu zmenu rychlosti
+ProcMoveA:	ld a,b; zrychlenie?
+		and 2
+		jp Z,ProcMoveC	; nie, skoc dalej
+		ld A,(de)		; (8) - скорость
+		inc a		; zvys rychlost
+		cp 3		; ak je uz maximalna rychlost (2 !!),
+		jp NC,ProcMoveC	; skoc dalej
+		ld (de),A		; (8) - uloz novu rychlost
+ProcMoveB:	dec a; je rychlost 1 ?
+		jp NZ,ProcMoveC	; nie, skoc dalej
+		ld (HL),7		; ano, inic. zdrzanie pre dalsiu zmenu rychlosti
 
 		; вращение Vorton
-ProcMoveC:	dcr	e		; (7) - вращение
-		inx	h		; posun sa na premennu pre zdrzanie pred zmenou otocenia
-		dcr	m		; zniz pocitadlo
-		jp	ProcMoveE	; ak nie je nulove, skoc dalej
-		mvi	m,1		; inak inic. zdrzanie pre dalsiu zmenu otocenia
-		mov	a,b
-		ani	4		; вращение вправо?
-		jz	ProcMoveD	; nie, skoc dalej
-		ldax	d		; (7) - вращение
-		inr	a		; zvys hodnotu otocenia
-		ani	7		; a uprav na interval <0, 7>
-		stax	d		; (7) - uloz novu hodnotu
-ProcMoveD:	mov	a,b		; вращение влево?
-		ani	8
-		jz	ProcMoveE	; nie, skoc dalej
-		ldax	d		; (7) - вращение
-		dcr	a		; zniz hodnotu otocenia
-		ani	7		; a uprav na interval <0, 7>
-		stax	d		; (7) uloz novu hodnotu
+ProcMoveC:	dec e; (7) - вращение
+		inc hl		; posun sa na premennu pre zdrzanie pred zmenou otocenia
+		dec (HL)		; zniz pocitadlo
+		jp P,ProcMoveE	; ak nie je nulove, skoc dalej
+		ld (HL),1		; inak inic. zdrzanie pre dalsiu zmenu otocenia
+		ld a,b
+		and 4		; вращение вправо?
+		jp Z,ProcMoveD	; nie, skoc dalej
+		ld A,(de)		; (7) - вращение
+		inc a		; zvys hodnotu otocenia
+		and 7		; a uprav na interval <0, 7>
+		ld (de),A		; (7) - uloz novu hodnotu
+ProcMoveD:	ld a,b; вращение влево?
+		and 8
+		jp Z,ProcMoveE	; nie, skoc dalej
+		ld A,(de)		; (7) - вращение
+		dec a		; zniz hodnotu otocenia
+		and 7		; a uprav na interval <0, 7>
+		ld (de),A		; (7) uloz novu hodnotu
 
 		; osetrenie letiacich striel
-ProcMoveE:	xchg			; ukazatel na premenne do DE
-		lxi	h,SprStructS1	; adresa struktury 1. strely
-		lxi	b,16		; offset na strukturu dalsej Strely
+ProcMoveE:	ex DE,HL; ukazatel na premenne do DE
+		ld hl,SprStructS1	; adresa struktury 1. strely
+		ld bc,16		; offset na strukturu dalsej Strely
 
-ProcMoveF:	inx	d		; posun sa na premennu - cas letu Strely
-		ldax	d		; do A
-		cpi	2		; ak su to 2 jednotky pred koncom
-		cz	IncPower	; zvys hodnotu POWER
-		ana	a		; ak uz cas Strely vyprsal,
-		jnz	ProcMoveG
-		mvi	m,0FEh		; deaktivuj sprite Strely
-		inr	a		; korekcia pred dekrementom
-ProcMoveG:	dcr	a		; zniz pocitadlo casu Strely
-		stax	d		; a uloz novu hodnotu
-		dad	b		; prejdi na dalsiu struturu
-		mov	a,l
-		cpi	((SprStructS3+16)&255) ; opakuj pre vsetky 3 Strely
-		jnz	ProcMoveF
+ProcMoveF:	inc de; posun sa na premennu - cas letu Strely
+		ld A,(de)		; do A
+		cp 2		; ak su to 2 jednotky pred koncom
+		call Z,IncPower	; zvys hodnotu POWER
+		and a		; ak uz cas Strely vyprsal,
+		jp NZ,ProcMoveG
+		ld (HL),0FEh		; deaktivuj sprite Strely
+		inc a		; korekcia pred dekrementom
+ProcMoveG:	dec a; zniz pocitadlo casu Strely
+		ld (de),A		; a uloz novu hodnotu
+		add HL,bc		; prejdi na dalsiu struturu
+		ld a,l
+		cp ((SprStructS3+16)&255) ; opakuj pre vsetky 3 Strely
+		jp NZ,ProcMoveF
 
 		; выстрел
-		xchg
-		inx	h		; posun sa na premennu - zdrzanie pred dalsim vystrelom
-		dcr	m		; zniz pocitadlo
-		jp	ProcSeq		; ak nie je nulove, skoc dalej
-		inr	m
-		lda	KbdState	; - FLRUD
-		ani	16		; je stlacene FIRE ?
-		jz	ProcSeq		; nie, skoc dalej
-		xchg
-		lxi	b,-16		; offset na predoslu strukturu
-		dad	b		; posun sa na strunkturu 3. Strely
-		dcx	d		; vrat sa na premennu - cas letu 3. Strely
-		ldax	d		; cas letu do A
-		ana	a		; je volna?
-		jz	ProcMoveI	; ano, pouzi ju
-		dcx	d		; posun sa na premennu - cas letu 2. Strely
-		dad	b		; posun sa na strunkturu 2. Strely
-		ldax	d		; cas letu do A
-		ana	a		; je volna?
-		jz	ProcMoveI	; ano, pouzi ju
-		dad	b		; posun sa na strunkturu 1. Strely
-		dcx	d		; posun sa na premennu - cas letu 1. Strely
-		ldax	d		; cas letu do A
-		ana	a		; je volna?
-		jnz	ProcSeq		; ak nie, skoc dalej
-ProcMoveI:	xchg			; adresa struktury Strely do DE
-ShotTime:	mvi	m,22		; inicializuj cas letu pre tuto Strelu
-		inr	a		; inicializuj premennu pre zdrzanie vystrelu
-		sta	FireDelay
+		ex DE,HL
+		inc hl		; posun sa na premennu - zdrzanie pred dalsim vystrelom
+		dec (HL)		; zniz pocitadlo
+		jp P,ProcSeq		; ak nie je nulove, skoc dalej
+		inc (HL)
+		ld A,(KbdState)	; - FLRUD
+		and 16		; je stlacene FIRE ?
+		jp Z,ProcSeq		; nie, skoc dalej
+		ex DE,HL
+		ld bc,-16		; offset na predoslu strukturu
+		add HL,bc		; posun sa na strunkturu 3. Strely
+		dec de		; vrat sa na premennu - cas letu 3. Strely
+		ld A,(de)		; cas letu do A
+		and a		; je volna?
+		jp Z,ProcMoveI	; ano, pouzi ju
+		dec de		; posun sa na premennu - cas letu 2. Strely
+		add HL,bc		; posun sa na strunkturu 2. Strely
+		ld A,(de)		; cas letu do A
+		and a		; je volna?
+		jp Z,ProcMoveI	; ano, pouzi ju
+		add HL,bc		; posun sa na strunkturu 1. Strely
+		dec de		; posun sa na premennu - cas letu 1. Strely
+		ld A,(de)		; cas letu do A
+		and a		; je volna?
+		jp NZ,ProcSeq		; ak nie, skoc dalej
+ProcMoveI:	ex DE,HL; adresa struktury Strely do DE
+ShotTime:	ld (HL),22; inicializuj cas letu pre tuto Strelu
+		inc a		; inicializuj premennu pre zdrzanie vystrelu
+		ld (FireDelay),A
 		; inicializuj strukturu strely podla struktury Vortona
-		lhld	VortonStruct	; adresa struktury aktualneho Vortona
-		mvi	b,5		; skopiruj data pozicie Vortona
-		call	Copy8		; do struktury Strely
-		inr	l		; (6)
-		inr	l		; (7)
-		inr	e		; (6)
-		inr	e		; (7)
-		mov	a,m		; skopiruj sekvenciu (otocenie) spritu
-		stax	d
-		inr	l		; (8)
-		inr	l		; (9)
-		inr	e		; (8)
-		inr	e		; (9)
-		mov	a,m		; skopiruj typ vykreslovacej rutiny
-		stax	d
+		ld HL,(VortonStruct)	; adresa struktury aktualneho Vortona
+		ld b,5		; skopiruj data pozicie Vortona
+		call Copy8		; do struktury Strely
+		inc l		; (6)
+		inc l		; (7)
+		inc e		; (6)
+		inc e		; (7)
+		ld a,(HL)		; skopiruj sekvenciu (otocenie) spritu
+		ld (de),A
+		inc l		; (8)
+		inc l		; (9)
+		inc e		; (8)
+		inc e		; (9)
+		ld a,(HL)		; skopiruj typ vykreslovacej rutiny
+		ld (de),A
 
 		; po vystrele zniz POWER
-		lda	PowerIndik	; pozicia posledneho dielika POWER
-		mov	e,a		; stlpec pre POWER
-		dcr	a		; zniz aktualny stlpec
-		sta	PowerIndik	; uloz novu hodnotu
-		mvi	d,24		; ряд для POWER
-		xra	a
-		call	Print88		; zmaz posledny znak POWER
-		mov	a,e		; kod znaku pre konkretny znak POWER
-		dcr	e
-		dcr	e
-		call	Print88		; zobraz znak
+		ld A,(PowerIndik)	; pozicia posledneho dielika POWER
+		ld e,a		; stlpec pre POWER
+		dec a		; zniz aktualny stlpec
+		ld (PowerIndik),A	; uloz novu hodnotu
+		ld d,24		; ряд для POWER
+		xor a
+		call Print88		; zmaz posledny znak POWER
+		ld a,e		; kod znaku pre konkretny znak POWER
+		dec e
+		dec e
+		call Print88		; zobraz znak
 
 		; priprav zvuk vystrelu
-		lxi	h,SndType
-		mvi	a,2
-		ora	m
-		mov	m,a
+		ld hl,SndType
+		ld a,2
+		or (HL)
+		ld (HL),a
 
 ; Обработка изменений последовательности спрайтов
 		; premenna Seq0E
-ProcSeq:	lxi	d,Seq0E		; adresa premennej Seq0E do DE
-		lhld	VortonStruct	; adresa struktury aktualneho Vortona
-		mvi	a,7
-		add	l
-		mov	l,a		; (7) - sekvencia spritu (otocenie)
-		mov	a,m
-		add	a		; zdvojnasob
-		stax	d		; a uloz novu hodnotu
+ProcSeq:	ld de,Seq0E; adresa premennej Seq0E do DE
+		ld HL,(VortonStruct)	; adresa struktury aktualneho Vortona
+		ld a,7
+		add A,l
+		ld l,a		; (7) - sekvencia spritu (otocenie)
+		ld a,(HL)
+		add A,a		; zdvojnasob
+		ld (de),A		; a uloz novu hodnotu
 
 		; premenna Seq0F
-		lxi	h,CntSeq0F	; adresa pocitadla pre Seq0F
-		dcr	m		; zniz pocitadlo, bolo nulove?
-		jp	ProcSeqD	; nie, preskoc spracovanie premennej Seq0F
-		mvi	m,2		; inicializuj pocitadlo
-		lxi	h,Seq0F		; adresa premennej Seq0F
-		lda	IncSeq0F	; inkrement pre Seq0F
-		mov	b,a		; uloz do B
-		mov	a,m		; hodnota Seq0F
-		add	b		; pripocitaj inkrement
-		cpi	7		; ak je vysledok < 7,
-		jc	ProcSeqB	; je to OK, skoc
-		mov	a,b		; inak neguj hodnotu inkrementu
-		cma
-		inr	a
-		sta	IncSeq0F	; uloz novu hodnotu
-		mov	b,a
-		mov	a,m		; hodnota Seq0F
-		add	b		; pripocitaj inkrement
-ProcSeqB:	mov	m,a		; a uloz
+		ld hl,CntSeq0F	; adresa pocitadla pre Seq0F
+		dec (HL)		; zniz pocitadlo, bolo nulove?
+		jp P,ProcSeqD	; nie, preskoc spracovanie premennej Seq0F
+		ld (HL),2		; inicializuj pocitadlo
+		ld hl,Seq0F		; adresa premennej Seq0F
+		ld A,(IncSeq0F)	; inkrement pre Seq0F
+		ld b,a		; uloz do B
+		ld a,(HL)		; hodnota Seq0F
+		add A,b		; pripocitaj inkrement
+		cp 7		; ak je vysledok < 7,
+		jp C,ProcSeqB	; je to OK, skoc
+		ld a,b		; inak neguj hodnotu inkrementu
+		cpl
+		inc a
+		ld (IncSeq0F),A	; uloz novu hodnotu
+		ld b,a
+		ld a,(HL)		; hodnota Seq0F
+		add A,b		; pripocitaj inkrement
+ProcSeqB:	ld (HL),a; a uloz
 
-		inr	l		; preskoc Seq10
+		inc l		; preskoc Seq10
 
 		; premenna Seq11
-		inr	l		; Seq11
-		mov	a,m		; hodnota Seq11 do A
-		inr	a		; +2
-		inr	a
-		cpi	7		; ak je vysledok < 7,
-		jc	ProcSeqC	; je to OK, skoc
-		xra	a		; inak vynuluj hodnotu
-ProcSeqC:	mov	m,a		; uloz novu hodnotu
+		inc l		; Seq11
+		ld a,(HL)		; hodnota Seq11 do A
+		inc a		; +2
+		inc a
+		cp 7		; ak je vysledok < 7,
+		jp C,ProcSeqC	; je to OK, skoc
+		xor a		; inak vynuluj hodnotu
+ProcSeqC:	ld (HL),a; uloz novu hodnotu
 
 		; premenna Seq10
-ProcSeqD:	lxi	h,CntSeq10	; adresa pocitadla pre Seq10
-		dcr	m		; zniz pocitadlo, bolo nulove?
-		jp	ProcSeqH	; preskoc spracovanie premennej Seq10
-		mvi	m,1		; inicializuj pocitadlo
-		lxi	h,Seq10		; adresa premennej Seq10
-		lda	IncSeq10	; inkrement pre Seq10
-		mov	b,a		; uloz do B
-		mov	a,m		; hodnota Seq10
-		add	b		; pripocitaj inkrement
-		cpi	7		; ak je vysledok < 7,
-		jc	ProcSeqF	; je to OK, skoc
-		mov	a,b		; inak neguj hodnotu inkrementu
-		cma
-		inr	a
-		sta	IncSeq10	; uloz novu hodnotu
-		mov	b,a
-		mov	a,m		; hodnota Seq10
-		add	b		; pripocitaj inkrement
-ProcSeqF:	mov	m,a		; a uloz
+ProcSeqD:	ld hl,CntSeq10; adresa pocitadla pre Seq10
+		dec (HL)		; zniz pocitadlo, bolo nulove?
+		jp P,ProcSeqH	; preskoc spracovanie premennej Seq10
+		ld (HL),1		; inicializuj pocitadlo
+		ld hl,Seq10		; adresa premennej Seq10
+		ld A,(IncSeq10)	; inkrement pre Seq10
+		ld b,a		; uloz do B
+		ld a,(HL)		; hodnota Seq10
+		add A,b		; pripocitaj inkrement
+		cp 7		; ak je vysledok < 7,
+		jp C,ProcSeqF	; je to OK, skoc
+		ld a,b		; inak neguj hodnotu inkrementu
+		cpl
+		inc a
+		ld (IncSeq10),A	; uloz novu hodnotu
+		ld b,a
+		ld a,(HL)		; hodnota Seq10
+		add A,b		; pripocitaj inkrement
+ProcSeqF:	ld (HL),a; a uloz
 
-		inr	l		; Seq11
+		inc l		; Seq11
 
 		; premenna Seq12
-		inr	l		; Seq12
-		mov	a,m		; hodnota Seq12 do A
-		inr	a		; +2
-		inr	a
-		cpi	7		; ak je vysledok < 7,
-		jc	ProcSeqG	; je to OK, skoc
-		xra	a		; inak vynuluj hodnotu
-ProcSeqG:	mov	m,a		; a uloz
+		inc l		; Seq12
+		ld a,(HL)		; hodnota Seq12 do A
+		inc a		; +2
+		inc a
+		cp 7		; ak je vysledok < 7,
+		jp C,ProcSeqG	; je to OK, skoc
+		xor a		; inak vynuluj hodnotu
+ProcSeqG:	ld (HL),a; a uloz
 
 		; premenna Seq13
-ProcSeqH:	lxi	h,Seq13		; adresa premennej Seq13
-		mov	a,m		; hodnota Seq13 do A
-		inr	a		; +2
-		inr	a
-		cpi	3		; ak je vysledok < 3,
-		jc	ProcSeqI	; je to OK, skoc
-		xra	a		; inak vynuluj hodnotu
-ProcSeqI:	mov	m,a		; a uloz
+ProcSeqH:	ld hl,Seq13; adresa premennej Seq13
+		ld a,(HL)		; hodnota Seq13 do A
+		inc a		; +2
+		inc a
+		cp 3		; ak je vysledok < 3,
+		jp C,ProcSeqI	; je to OK, skoc
+		xor a		; inak vynuluj hodnotu
+ProcSeqI:	ld (HL),a; a uloz
 		ret
 
 ;------------------------------------------------------------------------------
 ; Обработка движения объектов и их столкновений
-ProcSpr:	lhld	VortonStruct	; adresa struktury aktualneho Vortona
-		mov	a,m		; Y suradnica
-		cpi	0FEh		; je Vorton aktivny?
-		jnc	NextMSpr	; nie, skoc spracovat dalsi "hlavny" sprite
-		push	h		; odpamataj adresu struktury hl. spritu
-		mvi	a,8
-		add	l
-		mov	l,a		; (8) - скорость
-		mov	a,m		; скорость в A
-		ora	a		; vybuchuje prave Vorton?
-		jp	ProcSprA	; nie, pokracuj dalej
-		dcx	h		; (7) - направление / последовательность / вращение
-		mvi	m,0		; vynuluj sekvenciu spritu
-		jmp	ProcSprE	; pokracuj dalej
+ProcSpr:	ld HL,(VortonStruct); adresa struktury aktualneho Vortona
+		ld a,(HL)		; Y suradnica
+		cp 0FEh		; je Vorton aktivny?
+		jp NC,NextMSpr	; nie, skoc spracovat dalsi "hlavny" sprite
+		push hl		; odpamataj adresu struktury hl. spritu
+		ld a,8
+		add A,l
+		ld l,a		; (8) - скорость
+		ld a,(HL)		; скорость в A
+		or a		; vybuchuje prave Vorton?
+		jp P,ProcSprA	; nie, pokracuj dalej
+		dec hl		; (7) - направление / последовательность / вращение
+		ld (HL),0		; vynuluj sekvenciu spritu
+		jp ProcSprE	; pokracuj dalej
 
-ProcSprA:	mvi	a,-6
-		add	l
-		mov	l,a		; (2)
-		mov	b,m
-		dcx	h		; (1)
-		mov	c,m		; X координата Vorton в BC
-		dcx	h		; (0)
-		mov	a,b		; узнать, находится ли Вортон перед Зоной 30
-		ana	a
-		jnz	ProcSprB	; нет, переходим
-		mov	a,c		; это младший байт
-		cpi	0B0h
-		jc	ProcSprD	; je pred Zonou 30, preskoc test zmeny Zony
+ProcSprA:	ld a,-6
+		add A,l
+		ld l,a		; (2)
+		ld b,(HL)
+		dec hl		; (1)
+		ld c,(HL)		; X координата Vorton в BC
+		dec hl		; (0)
+		ld a,b		; узнать, находится ли Вортон перед Зоной 30
+		and a
+		jp NZ,ProcSprB	; нет, переходим
+		ld a,c		; это младший байт
+		cp 0B0h
+		jp C,ProcSprD	; je pred Zonou 30, preskoc test zmeny Zony
 
-ProcSprB:	xchg			; adresa struktury docasne do DE
-		lhld	ZonePos		; aktualna pozicia Zony do HL
-		call	SubBCHL		; over, ci Vorton opusta aktualnu Zonu
+ProcSprB:	ex DE,HL; adresa struktury docasne do DE
+		ld HL,(ZonePos)		; aktualna pozicia Zony do HL
+		call SubBCHL		; over, ci Vorton opusta aktualnu Zonu
 					; ak je rozdiel zaporny,
-		jnz	ProcSprC	;  Vorton prechadza do predoslej Zony
-		xchg			; adresa struktury nazad do HL
-		mov	a,c		; ak je rozdiel >= 0B0h,
-		cpi	0B0h		;  Vorton prechadza do nasledujucej Zony
-		jc	ProcSprD	; Vorton zostava v aktualnej Zone, skoc
-ProcSprC:	call	PrepSpr		; priprav sprity
-		call	DrawZone	; vykresli novu Zonu
-		lhld	VortonStruct	; obnov do HL adresu struktury Vortona
+		jp NZ,ProcSprC	;  Vorton prechadza do predoslej Zony
+		ex DE,HL			; adresa struktury nazad do HL
+		ld a,c		; ak je rozdiel >= 0B0h,
+		cp 0B0h		;  Vorton prechadza do nasledujucej Zony
+		jp C,ProcSprD	; Vorton zostava v aktualnej Zone, skoc
+ProcSprC:	call PrepSpr; priprav sprity
+		call DrawZone	; vykresli novu Zonu
+		ld HL,(VortonStruct)	; obnov do HL adresu struktury Vortona
 
-ProcSprD:	mvi	a,8
-		add	l
-		mov	l,a		; (8)
-		mov	a,m		; скорость движения Vorton
-		ana	a		; je rychlost nulova?
-		jnz	ProcSprM	; nie, skoc spracovat pohyb
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+ProcSprD:	ld a,8
+		add A,l
+		ld l,a		; (8)
+		ld a,(HL)		; скорость движения Vorton
+		and a		; je rychlost nulova?
+		jp NZ,ProcSprM	; nie, skoc spracovat pohyb
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
 		; slucka spracovania dalsieho spritu
-ProcSprL:	push	h		; odpamataj adresu struktury "hlavneho" spritu
-		mvi	a,8
-		add	l
-		mov	l,a		; (8)
-		mov	a,m		; скорость движения объекта
-		ani	0BFh		; vynuluj 6. bit - sprite v pohybe po odrazeni
+ProcSprL:	push hl; odpamataj adresu struktury "hlavneho" spritu
+		ld a,8
+		add A,l
+		ld l,a		; (8)
+		ld a,(HL)		; скорость движения объекта
+		and 0BFh		; vynuluj 6. bit - sprite v pohybe po odrazeni
 					; ak nie je sprite v pohybe,
-		jz	NextMSprP	;  skoc spracovat dalsi "hlavny" sprite
+		jp Z,NextMSprP	;  skoc spracovat dalsi "hlavny" sprite
 					; vybuchuje prave sprite?
-		jp	ProcSprM	; nie, skoc spracovat pohyb
-		dcx	h		; (7)
-ProcSprE:	dcx	h		; (6)
-		dcx	h		; (5)
-		mov	a,m		; sekvencia spritu vybuch
-		adi	8		; posun sa na dalsiu sekvenciu vybuchu
-		cpi	0DCh		; конец взрыва?
-		jc	ProcSprF	; nie, skoc dalej
-		inx	h		; (6)
-		inx	h		; (7)
-		inx	h		; (8)
-		mov	a,m		; (8) - скорость объекта
-		ani	7Fh		; zrus flag vybuchu
-		mov	m,a		; a uloz
-		jmp	ShotOff		; skoc deaktivovat sprite, prejdi na dalsi
+		jp P,ProcSprM	; nie, skoc spracovat pohyb
+		dec hl		; (7)
+ProcSprE:	dec hl; (6)
+		dec hl		; (5)
+		ld a,(HL)		; sekvencia spritu vybuch
+		add A,8		; posun sa na dalsiu sekvenciu vybuchu
+		cp 0DCh		; конец взрыва?
+		jp C,ProcSprF	; nie, skoc dalej
+		inc hl		; (6)
+		inc hl		; (7)
+		inc hl		; (8)
+		ld a,(HL)		; (8) - скорость объекта
+		and 7Fh		; zrus flag vybuchu
+		ld (HL),a		; a uloz
+		jp ShotOff		; skoc deaktivovat sprite, prejdi na dalsi
 
-ProcSprF:	mov	m,a		; (5) - uloz novu sekvenciu spritu
-		inx	h		; (6) - kod spritu
-		mov	a,m		; kod spritu do A
-		ani	0Fh		; ponechaj iba zakladny kod
-		jz	ProcSprH	; ak je to Vorton, skoc dalej
-		mvi	e,1<<3		; Snd3 pre pohyblive objekty
-		cpi	7		; ak su to pohyblive objekty,
-		jc	ProcSprG	; skoc nastavit zvuk a prejdi na dalsi sprite
-		mvi	e,1<<7		; pre ostatne sprity Snd7
-		jmp	ProcSprG	; skoc nastavit zvuk a prejdi na dalsi sprite
+ProcSprF:	ld (HL),a; (5) - uloz novu sekvenciu spritu
+		inc hl		; (6) - kod spritu
+		ld a,(HL)		; kod spritu do A
+		and 0Fh		; ponechaj iba zakladny kod
+		jp Z,ProcSprH	; ak je to Vorton, skoc dalej
+		ld e,1<<3		; Snd3 pre pohyblive objekty
+		cp 7		; ak su to pohyblive objekty,
+		jp C,ProcSprG	; skoc nastavit zvuk a prejdi na dalsi sprite
+		ld e,1<<7		; pre ostatne sprity Snd7
+		jp ProcSprG	; skoc nastavit zvuk a prejdi na dalsi sprite
 
 		; стирание Vortona с панели
-ProcSprH:	mov	a,l		; z adresy struktury aktualneho Vortona
-		rrc			; vypocitaj znakovy stlpec Vortona na panely
-		rrc
-		rrc
-		ani	1Fh
-		adi	6
-		mov	e,a		; uloz do E
-		mvi	d,24		; riadok, kde je Vorton na panely
-		mvi	l,3		; vyska Vortona 3 znaky
-ProcSprI:	xra	a		; zmaz lavy znak
-		call	Print88
-		xra	a		; zmaz pravy znak
-		call	Print88
-		inr	d		; dalsi riadok
-		dcr	e		; vrat sa na prvy stlpec
-		dcr	e
-		dcr	l
-		jnz	ProcSprI
-		mvi	e,1<<6		; Snd6 pre Vortona
-ProcSprG:	lxi	h,SndType	; adresa typu zvuku pri vybuchu do HL
-		mov	a,m
-		ora	e		; priprav zvuk
-		mov	m,a
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+ProcSprH:	ld a,l; z adresy struktury aktualneho Vortona
+		rrca			; vypocitaj znakovy stlpec Vortona na panely
+		rrca
+		rrca
+		and 1Fh
+		add A,6
+		ld e,a		; uloz do E
+		ld d,24		; riadok, kde je Vorton na panely
+		ld l,3		; vyska Vortona 3 znaky
+ProcSprI:	xor a; zmaz lavy znak
+		call Print88
+		xor a		; zmaz pravy znak
+		call Print88
+		inc d		; dalsi riadok
+		dec e		; vrat sa na prvy stlpec
+		dec e
+		dec l
+		jp NZ,ProcSprI
+		ld e,1<<6		; Snd6 pre Vortona
+ProcSprG:	ld hl,SndType; adresa typu zvuku pri vybuchu do HL
+		ld a,(HL)
+		or e		; priprav zvuk
+		ld (HL),a
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
 		; spracovanie pohybu a kolizie spritov
-ProcSprM:	dcr	a		; rychlost pohybu -1 => <0,3>
-		rrc			; 
-		rrc			; A = (A - 1) * 64
-		mov	e,a		; offset do tabulky podla rychlosti
-		dcx	h		; (7)
-		mov	a,m		; sekvencia spritu (otocenie)
-		add	a		; x2
-		add	a		; x4
-		add	a		; x8
-		add	e		; + offset podla otocenia
-		mov	e,a		; uloz do E
-		mvi	d,MovTable/256	; D = vyssi byte tabulky posunu spritu
-		mvi	a,-7
-		add	l
-		mov	l,a		; (0) - pozicia Y spritu
-		ldax	d		; inkrement Y pozicie spritu
-		add	m		; pripocitaj Y poziciu spritu
+ProcSprM:	dec a; rychlost pohybu -1 => <0,3>
+		rrca			;
+		rrca			; A = (A - 1) * 64
+		ld e,a		; offset do tabulky podla rychlosti
+		dec hl		; (7)
+		ld a,(HL)		; sekvencia spritu (otocenie)
+		add A,a		; x2
+		add A,a		; x4
+		add A,a		; x8
+		add A,e		; + offset podla otocenia
+		ld e,a		; uloz do E
+		ld d,MovTable/256	; D = vyssi byte tabulky posunu spritu
+		ld a,-7
+		add A,l
+		ld l,a		; (0) - pozicia Y spritu
+		ld A,(de)		; inkrement Y pozicie spritu
+		add A,(HL)		; pripocitaj Y poziciu spritu
 ;		sta	ChDir4Y+1	; uloz na neskor
-		xchg			; adresa tabulky do HL, struktura do DE
-		cpi	49h		; ak by bola po posune Y suradnica
-		jnc	ProcSprO	; mimo rozsah <0, 48h>, skoc dalej
-		sui	07h		; uprav Y suradnicu pre test kolizie
-		sta	ProcSprColl+1	; a uloz na neskor
-		inx	h		; posun sa na inkrement X
-		mov	c,m		; inkrement X do BC
-		inx	h
-		mov	b,m
-		shld	MovTablePtr+1	; odpamataj ukazatel na tabulku
-		xchg			; adresa struktury spritu do HL
-		inx	h		; (1) - XL
-		mov	e,m		; X pozicia spritu do DE
-		inx	h		; (2) - XH
-		mov	d,m
-		xchg			; X pozicia spritu do HL, struktura do DE
-		dad	b		; pripocitaj inkrement
-		mov	c,l
-		mov	b,h		; vysledok do BC
-		lhld	ZonePosP	; pozicia predchadzajucej Zony do HL
-		call	SubBCHL		; vypocitaj vzdialenost aktualneho spritu
+		ex DE,HL			; adresa tabulky do HL, struktura do DE
+		cp 49h		; ak by bola po posune Y suradnica
+		jp NC,ProcSprO	; mimo rozsah <0, 48h>, skoc dalej
+		sub 07h		; uprav Y suradnicu pre test kolizie
+		ld (ProcSprColl+1),A	; a uloz na neskor
+		inc hl		; posun sa na inkrement X
+		ld c,(HL)		; inkrement X do BC
+		inc hl
+		ld b,(HL)
+		ld (MovTablePtr+1),HL	; odpamataj ukazatel na tabulku
+		ex DE,HL			; adresa struktury spritu do HL
+		inc hl		; (1) - XL
+		ld e,(HL)		; X pozicia spritu do DE
+		inc hl		; (2) - XH
+		ld d,(HL)
+		ex DE,HL			; X pozicia spritu do HL, struktura do DE
+		add HL,bc		; pripocitaj inkrement
+		ld c,l
+		ld b,h		; vysledok do BC
+		ld HL,(ZonePosP)	; pozicia predchadzajucej Zony do HL
+		call SubBCHL		; vypocitaj vzdialenost aktualneho spritu
 					;   od predoslej Zony
-		cpi	02h		; ak je to maximalne rozdiel (takmer) 3 Zon
-		jc	ProcSprZ	; tak spracuj tento Sprite
+		cp 02h		; ak je to maximalne rozdiel (takmer) 3 Zon
+		jp C,ProcSprZ	; tak spracuj tento Sprite
 		.db	1		; LXI B - preskoc nasledujuce 2 instrukcie
-ProcSprO:	inx	d		; (1)
-		inx	d		; (2)
-		mvi	a,7*2		; pokracuj, akoby sa narazilo do GlassBrick
-		pop	b		; obnov adresu struktury hlavneho spritu
-		push	b		; do BC a znovu uloz
-		jmp	ProcSprCollC	; skoc vykonat nepriamy skok do rutiny
+ProcSprO:	inc de; (1)
+		inc de		; (2)
+		ld a,7*2		; pokracuj, akoby sa narazilo do GlassBrick
+		pop bc		; obnov adresu struktury hlavneho spritu
+		push bc		; do BC a znovu uloz
+		jp ProcSprCollC	; skoc vykonat nepriamy skok do rutiny
 
 		; osetrenie kolizie aktualneho spritu s inym
-ProcSprZ:	dad	b		; vrat povodnu hodnotu pozicie X spritu
-		lxi	b,-7		; -7
-		dad	b		; uprav X poziciu pre test kolizie
-		shld	NextCSpr0+1	; a uloz
+ProcSprZ:	add HL,bc; vrat povodnu hodnotu pozicie X spritu
+		ld bc,-7		; -7
+		add HL,bc		; uprav X poziciu pre test kolizie
+		ld (NextCSpr0+1),HL	; a uloz
 ; prejdeme vsetky sprity v danej Zone a preverime ich koliziu s hlavnym spritom
-		lhld	VortonStruct	; zacneme aktualnym Vortonom
-NextCSpr0:	lxi	b,0		; X pozicia pre test kolizie
-		mov	a,m		; Y suradnica spritu pre test na koliziu
-		cpi	0FEh		; je to aktivny sprite?
-		jc	ProcSprColl	; ano, skoc previest testy
-		jnz	ProcSprNoColl	; ak je to koniec zoznamu, skoc dalej
-NextCSpr16:	lxi	d,16		; dalsi sprite
-		dad	d
-		jmp	NextCSpr0	; skoc overit dalsi sprite
+		ld HL,(VortonStruct)	; zacneme aktualnym Vortonom
+NextCSpr0:	ld bc,0; X pozicia pre test kolizie
+		ld a,(HL)		; Y suradnica spritu pre test na koliziu
+		cp 0FEh		; je to aktivny sprite?
+		jp C,ProcSprColl	; ano, skoc previest testy
+		jp NZ,ProcSprNoColl	; ak je to koniec zoznamu, skoc dalej
+NextCSpr16:	ld de,16; dalsi sprite
+		add HL,de
+		jp NextCSpr0	; skoc overit dalsi sprite
 
 		; nenasla sa ziadna kolizia
-ProcSprNoColl:	pop	d		; obnov adresu struktury hlavneho spritu
-		push	d		; do DE a znovu uloz
-		lda	ProcSprColl+1	; vrat Y poziciu na povodnu hodnotu
-		adi	7
-		stax	d		; a uloz do struktury spritu
-		lxi	h,7		; vrat X poziciu na povodnu hodnotu
-		dad	b
-		xchg			; a presun do DE
-		inx	h		; (1)
-		mov	m,e		; a uloz do struktury spritu
-		inx	h		; (2)
-		mov	m,d
-		mvi	a,7		; posun sa na typ rutiny
-		add	l
-		mov	l,a		; (9) - тип процедуры
-MovTablePtr:	lxi	d,0		; obnov ukazatel do tabulky
-		inx	d		; posun ukazatel na inkrement typu rutiny
-		ldax	d		; inkrement do A
-		inx	d		; posun ukazatel na inkrement VO2
-		add	m		; pripocitaj inkrement k aktualnej hodnote
-		jm	ProcSprNoCollA	; ak je sucasna hodnota <0, uprav ju na kladnu
-		cpi	4		; ak sme v rozsahu {0, 1, 2},
-		jc	ProcSprNoCollC	; skoc novu hodnotu ulozit
-		sui	4		; ak je sucasna hodnota >2,
-		jp	ProcSprNoCollB	;  uprav ju na povoleny rozsah
+ProcSprNoColl:	pop de; obnov adresu struktury hlavneho spritu
+		push de		; do DE a znovu uloz
+		ld A,(ProcSprColl+1)	; vrat Y poziciu na povodnu hodnotu
+		add A,7
+		ld (de),A		; a uloz do struktury spritu
+		ld hl,7		; vrat X poziciu na povodnu hodnotu
+		add HL,bc
+		ex DE,HL			; a presun do DE
+		inc hl		; (1)
+		ld (HL),e		; a uloz do struktury spritu
+		inc hl		; (2)
+		ld (HL),d
+		ld a,7		; posun sa na typ rutiny
+		add A,l
+		ld l,a		; (9) - тип процедуры
+MovTablePtr:	ld de,0; obnov ukazatel do tabulky
+		inc de		; posun ukazatel na inkrement typu rutiny
+		ld A,(de)		; inkrement do A
+		inc de		; posun ukazatel na inkrement VO2
+		add A,(HL)		; pripocitaj inkrement k aktualnej hodnote
+		jp M,ProcSprNoCollA	; ak je sucasna hodnota <0, uprav ju na kladnu
+		cp 4		; ak sme v rozsahu {0, 1, 2},
+		jp C,ProcSprNoCollC	; skoc novu hodnotu ulozit
+		sub 4		; ak je sucasna hodnota >2,
+		jp P,ProcSprNoCollB	;  uprav ju na povoleny rozsah
 
-ProcSprNoCollA:	adi	4		; uprav hodnotu na povoleny rozsah
-ProcSprNoCollB:	inx	d		; pri opusteni znakovej pozicie, posun
-		inx	d		; ukazatel v tabulke na druhy inkrement
-ProcSprNoCollC:	mov	m,a		; (9) - uloz novu hodnotu
-		mvi	a,-5
-		add	l
-		mov	l,a		; (4)
-		mov	b,m
-		dcx	h		; (3)
-		mov	c,m		; sucasna adresa VO2 spritu do BC
-		xchg
-		mov	a,m
-		inx	h
-		mov	h,m
-		mov	l,a		; inkrement adresy VO2 do HL
-		dad	b		; pripocitaj inkrement
-		xchg
-		mov	m,e		; a uloz novu hodnotu
-		inx	h		; (4)
-		mov	m,d
-		inx	h		; (5)
-		inx	h		; (6)
-		mov	a,m		; kod spritu do A
-		inx	h		; (7)
-		xchg			; adresa struktury +7 do DE
-		cpi	4		; je to Sprite Frog?
-		jnz	ProcSprNoCollE	; nie, skoc dalej
+ProcSprNoCollA:	add A,4; uprav hodnotu na povoleny rozsah
+ProcSprNoCollB:	inc de; pri opusteni znakovej pozicie, posun
+		inc de		; ukazatel v tabulke na druhy inkrement
+ProcSprNoCollC:	ld (HL),a; (9) - uloz novu hodnotu
+		ld a,-5
+		add A,l
+		ld l,a		; (4)
+		ld b,(HL)
+		dec hl		; (3)
+		ld c,(HL)		; sucasna adresa VO2 spritu do BC
+		ex DE,HL
+		ld a,(HL)
+		inc hl
+		ld h,(HL)
+		ld l,a		; inkrement adresy VO2 do HL
+		add HL,bc		; pripocitaj inkrement
+		ex DE,HL
+		ld (HL),e		; a uloz novu hodnotu
+		inc hl		; (4)
+		ld (HL),d
+		inc hl		; (5)
+		inc hl		; (6)
+		ld a,(HL)		; kod spritu do A
+		inc hl		; (7)
+		ex DE,HL			; adresa struktury +7 do DE
+		cp 4		; je to Sprite Frog?
+		jp NZ,ProcSprNoCollE	; nie, skoc dalej
 		; Frog (04h)
-		mvi	a,5
-		add	e
-		mov	e,a		; (12)
-ProcSprNoCollD:	call	Rand		; nahodna hodnota do (HL)
-		ldax	d		; inicializacna hodnota pre sekvenciu
-		add	a		;  spritu (otocenie) *2
-		mvi	b,0		; vypocitany offset uloz do BC
-		mov	c,a
-		mvi	a,-5
-		add	e
-		mov	e,a		; (7)
-		mov	a,m		; nahodna hodnota do A
+		ld a,5
+		add A,e
+		ld e,a		; (12)
+ProcSprNoCollD:	call Rand; nahodna hodnota do (HL)
+		ld A,(de)		; inicializacna hodnota pre sekvenciu
+		add A,a		;  spritu (otocenie) *2
+		ld b,0		; vypocitany offset uloz do BC
+		ld c,a
+		ld a,-5
+		add A,e
+		ld e,a		; (7)
+		ld a,(HL)		; nahodna hodnota do A
 ;		rrc			; horne 4 bity na miesto dolnych
 ;		rrc
 ;		rrc
 ;		rrc
-		lxi	h,SeqMaskTab	; tabulka pre nahodnu zmenu sekvencie
-		dad	b		; spritu - pripocitaj offset
-		ana	m		; na nahodnu hodnotu aplikuj masku
-		inx	h
-		ora	m		; a pripoj definovanu hodnotu
-		stax	d		; uloz novu sekvenciu
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+		ld hl,SeqMaskTab	; tabulka pre nahodnu zmenu sekvencie
+		add HL,bc		; spritu - pripocitaj offset
+		and (HL)		; na nahodnu hodnotu aplikuj masku
+		inc hl
+		or (HL)		; a pripoj definovanu hodnotu
+		ld (de),A		; uloz novu sekvenciu
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
-ProcSprNoCollE:	ani	0Fh		; ponechaj iba zakladny kod spritu
-		cpi	3		; je to sprite Eye alebo Disk?
-		jnz	ProcSprNoCollG	; nie, skoc dalej
+ProcSprNoCollE:	and 0Fh; ponechaj iba zakladny kod spritu
+		cp 3		; je to sprite Eye alebo Disk?
+		jp NZ,ProcSprNoCollG	; nie, skoc dalej
 		; Eye (03h) alebo Disk (13h)
-		call	Rand		; nahodna hodnota do A
+		call Rand		; nahodna hodnota do A
 					; podla hodnoty, zvol zmenu sekvencie
-		cpi	0F5h		; ak je < 0F5h,
-		jc	ProcSprNoCollF	; skoc dalej
-		ldax	d		; cislo sekvencie spritu sa dekrementuje
-		dcr	a
-		ani	7		; uprav na rozsah <0, 7>
-		stax	d		; uloz novu hodnotu sekvencie
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+		cp 0F5h		; ak je < 0F5h,
+		jp C,ProcSprNoCollF	; skoc dalej
+		ld A,(de)		; cislo sekvencie spritu sa dekrementuje
+		dec a
+		and 7		; uprav na rozsah <0, 7>
+		ld (de),A		; uloz novu hodnotu sekvencie
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
-ProcSprNoCollF:	cpi	0Ah		; ak je > 0Ah,
-		jnc	NextMSprP	;  skoc spracovat dalsi "hlavny" sprite
-		ldax	d		; cislo sekvencie spritu sa inkrementuje
-		inr	a
-		ani	7		; uprav na rozsah <0, 7>
-		stax	d		; uloz novu hodnotu sekvencie
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+ProcSprNoCollF:	cp 0Ah; ak je > 0Ah,
+		jp NC,NextMSprP	;  skoc spracovat dalsi "hlavny" sprite
+		ld A,(de)		; cislo sekvencie spritu sa inkrementuje
+		inc a
+		and 7		; uprav na rozsah <0, 7>
+		ld (de),A		; uloz novu hodnotu sekvencie
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
-ProcSprNoCollG:	cpi	10		; je to sprite Block alebo Barrel?
-		jnz	NextMSprP	; nie, skoc spracovat dalsi "hlavny" sprite
+ProcSprNoCollG:	cp 10; je to sprite Block alebo Barrel?
+		jp NZ,NextMSprP	; nie, skoc spracovat dalsi "hlavny" sprite
 		; Block (0Ah) alebo Barrel (1Ah)
-		inx	d		; (8)
-NextMSprS:	ldax	d		; (8) - rychlost do A
-		ani	0BFh		; zrus flag, ze je Block/Barrel v pohybe
-		rar			; vydel rychlost dvoma
-		stax	d		; uloz novu hodnotu
-NextMSprP:	pop	h
-NextMSpr:	lxi	d,16		; prejdi na dalsiu strukturu
-NextMSprD:	dad	d
-		mov	a,m		; dalsi sprite
-		cpi	0FEh		; je aktivny?
-		jc	ProcSprL	; ano, skoc ho spracovat
-		jz	NextMSprD	; nie, skus dalsi sprite
+		inc de		; (8)
+NextMSprS:	ld A,(de); (8) - rychlost do A
+		and 0BFh		; zrus flag, ze je Block/Barrel v pohybe
+		rra			; vydel rychlost dvoma
+		ld (de),A		; uloz novu hodnotu
+NextMSprP:	pop hl
+NextMSpr:	ld de,16; prejdi na dalsiu strukturu
+NextMSprD:	add HL,de
+		ld a,(HL)		; dalsi sprite
+		cp 0FEh		; je aktivny?
+		jp C,ProcSprL	; ano, skoc ho spracovat
+		jp Z,NextMSprD	; nie, skus dalsi sprite
 		ret
 
 ; pokracovanie osetrenia kolizie aktualneho spritu s inym
@@ -1313,58 +1313,58 @@ NextMSprD:	dad	d
 ; (ProcSprColl+1) = suradnica Y "hlavneho" spritu
 ; HL = adresa struktury "kolizneho" spritu
 ; A = suradnica Y "kolizneho" spritu
-ProcSprColl:	sui	0		; porovnaj suradnice Y spritov
-		cpi	0Fh		; ak je rozdiel >= 0Fh
-		jnc	NextCSpr16	; sprity nie su v kolizii, skoc
-		inx	h		; (1)
-		mov	e,m		; 
-		inx	h		; (2)
-		mov	d,m
-		call	SubDEBC		; porovnaj suradnice X spritov
-		jnz	NextCSpr14	; ak je rozdiel >= 0Fh, sprity nie su v kolizii, skoc
-		mov	a,e		; este nizsi byte
-		cpi	0Fh
-		jc	ProcSprCollA	; su v kolizii, skoc
-NextCSpr14:	lxi	d,14		; prejdi na dalsi sprite
-		dad	d
-		jmp	NextCSpr0
+ProcSprColl:	sub 0; porovnaj suradnice Y spritov
+		cp 0Fh		; ak je rozdiel >= 0Fh
+		jp NC,NextCSpr16	; sprity nie su v kolizii, skoc
+		inc hl		; (1)
+		ld e,(HL)		;
+		inc hl		; (2)
+		ld d,(HL)
+		call SubDEBC		; porovnaj suradnice X spritov
+		jp NZ,NextCSpr14	; ak je rozdiel >= 0Fh, sprity nie su v kolizii, skoc
+		ld a,e		; este nizsi byte
+		cp 0Fh
+		jp C,ProcSprCollA	; su v kolizii, skoc
+NextCSpr14:	ld de,14; prejdi na dalsi sprite
+		add HL,de
+		jp NextCSpr0
 
 		; nasla sa kolizia
-ProcSprCollA:	pop	b		; adresa struktury "hlavneho" spritu
-		push	b		; do BC a znovu uloz
-		mov	a,c		; este otestuj, ci to nie je ta ista
-		inr	a		;  struktura
-		inr	a
-		cmp	l
-		jnz	ProcSprCollB	; nie je, skoc
-		mov	a,b
-		cmp	h
-		jz	NextCSpr14	; je, prejdi na dalsi sprite
+ProcSprCollA:	pop bc; adresa struktury "hlavneho" spritu
+		push bc		; do BC a znovu uloz
+		ld a,c		; este otestuj, ci to nie je ta ista
+		inc a		;  struktura
+		inc a
+		cp l
+		jp NZ,ProcSprCollB	; nie je, skoc
+		ld a,b
+		cp h
+		jp Z,NextCSpr14	; je, prejdi na dalsi sprite
 
-ProcSprCollB:	xchg			; adresa "kolizneho" spritu +2 do DE
-		mvi	a,4		; posun sa na typ "kolizneho" spritu
-		add	e		; (6)
-		mov	l,a
-		mov	h,d
-		mov	a,m		; (6) typ spritu
-		ani	0Fh		; iba zakladny kod
-		add	a		; *2
-ProcSprCollC:	mov	l,a		; uloz do L
-		mvi	a,11		; posun sa na bazovy offset na zoznam
-		add	c		; "hlavneho" spritu
-		mov	c,a		; (11)
-		ldax	b		; bazovy offset na zoznam z "hlavneho" spritu
-		add	l		; pripocitaj bazovy offset na zoznam
-		mov	l,a		; obsluznych rutin kolizie
-		mvi	h,RtnList/256	; HL=adresa v zozname rutin
-		mov	a,m		; samotnu adresu obsluznej rutiny do HL
-		inx	h
-		mov	h,m
-		mov	l,a
-		dcx	b		; (10)
-		dcx	b		; (9)
-		dcx	b		; (8) - adresa "hlavneho" spritu +8 v BC
-		pchl			; skoc nepriamo do obsluznej rutiny
+ProcSprCollB:	ex DE,HL; adresa "kolizneho" spritu +2 do DE
+		ld a,4		; posun sa na typ "kolizneho" spritu
+		add A,e		; (6)
+		ld l,a
+		ld h,d
+		ld a,(HL)		; (6) typ spritu
+		and 0Fh		; iba zakladny kod
+		add A,a		; *2
+ProcSprCollC:	ld l,a; uloz do L
+		ld a,11		; posun sa na bazovy offset na zoznam
+		add A,c		; "hlavneho" spritu
+		ld c,a		; (11)
+		ld A,(bc)		; bazovy offset na zoznam z "hlavneho" spritu
+		add A,l		; pripocitaj bazovy offset na zoznam
+		ld l,a		; obsluznych rutin kolizie
+		ld h,RtnList/256	; HL=adresa v zozname rutin
+		ld a,(HL)		; samotnu adresu obsluznej rutiny do HL
+		inc hl
+		ld h,(HL)
+		ld l,a
+		dec bc		; (10)
+		dec bc		; (9)
+		dec bc		; (8) - adresa "hlavneho" spritu +8 v BC
+		jp (HL)			; skoc nepriamo do obsluznej rutiny
 		; HL = adresa obsluznej rutiny kolizie
 		; BC = adresa +8 struktury "hlavneho" spritu
 		; DE = adresa +2 struktury "kolizneho" spritu
@@ -1376,27 +1376,27 @@ ProcSprCollC:	mov	l,a		; uloz do L
 ;       - Vorton (00h), Auto-Vorton (10h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;        - Lasertron (09h), BrickA (19h)
-PushLTron:	mvi	a,4		; prejdi na kod "kolizneho" spritu
-		add	e
-		mov	e,a		; (6) - kod spritu
-		ldax	d
-		ani	10h		; je to BrickA (19h)?
-		jnz	NextMSprSB	; ano, skoc znizit rychlost Vortona
-		dcr	c		; (7) - otocenie Vortona
-		ldax	b		; otocenie Vortona do A
-		inr	c		; (8)
-		dcr	a		; over povolene otocenie Vortona,
-		dcr	a		;  aby mohol tlacit Lasertron
-		cpi	05h		; je Vorton otoceny na V, SV, JV?
-		jc	VortHit		; nie, skoc osetrit naraz
-		inr	e		; (7) - sekvencia "kolizneho" spritu
-		xra	a
-		stax	d		; inak vynuluj sekvenciu Lasertronu
-		inr	e		; (8) - rychlost
-		inr	a
-		stax	d		; nastav Lasertronu aj Vortonu
-		stax	b		; rychlost 1
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+PushLTron:	ld a,4; prejdi na kod "kolizneho" spritu
+		add A,e
+		ld e,a		; (6) - kod spritu
+		ld A,(de)
+		and 10h		; je to BrickA (19h)?
+		jp NZ,NextMSprSB	; ano, skoc znizit rychlost Vortona
+		dec c		; (7) - otocenie Vortona
+		ld A,(bc)		; otocenie Vortona do A
+		inc c		; (8)
+		dec a		; over povolene otocenie Vortona,
+		dec a		;  aby mohol tlacit Lasertron
+		cp 05h		; je Vorton otoceny na V, SV, JV?
+		jp C,VortHit		; nie, skoc osetrit naraz
+		inc e		; (7) - sekvencia "kolizneho" spritu
+		xor a
+		ld (de),A		; inak vynuluj sekvenciu Lasertronu
+		inc e		; (8) - rychlost
+		inc a
+		ld (de),A		; nastav Lasertronu aj Vortonu
+		ld (bc),A		; rychlost 1
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Osetrenie narazu Block (0Ah) do Barrel (1Ah) a naopak
@@ -1404,38 +1404,38 @@ PushLTron:	mvi	a,4		; prejdi na kod "kolizneho" spritu
 ;       - Block (0Ah), Barrel (1Ah)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Block (0Ah), Barrel (1Ah)
-BlkBrlHit:	ldax	b		; rychlost "hlavneho" spritu
-		mov	l,a		; do L
-		ani	40h		; je Block/Barrel v pohybe?
-		jnz	BlkBrlHitA	; ano, skoc dalej
-		mov	a,l
-		cpi	02h		; je rychlost <2 ?
-		jc	NextMSprP	; ano, skoc spracovat dalsi "hlavny" sprite
-NextMSprSB:	mov	e,c		; presun adresu struktury "hlavneho"
-		mov	d,b		; spritu do DE
-		jmp	NextMSprS	; a skoc znizit rychlost
+BlkBrlHit:	ld A,(bc); rychlost "hlavneho" spritu
+		ld l,a		; do L
+		and 40h		; je Block/Barrel v pohybe?
+		jp NZ,BlkBrlHitA	; ano, skoc dalej
+		ld a,l
+		cp 02h		; je rychlost <2 ?
+		jp C,NextMSprP	; ano, skoc spracovat dalsi "hlavny" sprite
+NextMSprSB:	ld e,c; presun adresu struktury "hlavneho"
+		ld d,b		; spritu do DE
+		jp NextMSprS	; a skoc znizit rychlost
 
-BlkBrlHitA:	mov	a,l
-		ani	0BFh		; zrus flag "hlavneho" spritu v pohybe
-		mov	l,a		; nazad do L
-		stax	b		; a uloz do struktury
-		mvi	a,4		; prejdi na kod "kolizneho" spritu
-		add	e
-		mov	e,a		; (6) - kod spritu
-		ldax	d
-		ani	10h		; ak je to Barrel,
-		mov	a,l
-		jnz	BlkBrlHitB	; preskoc znizenie rychlosti
-		rar			; pre Block zniz rychlost
-BlkBrlHitB:	inr	e		; (7)
-		inr	e		; (8) - rychlost spritu
-		ori	40h		; nastav flag, ze je Block/Barrel v pohybe
-		stax	d		; uloz novu hodnotu
-		dcr	e		; (7) - smer spritu
-		dcr	c		; (7)
-		ldax	b		; skopiruj smer z jedneho spritu
-		stax	d		; do druheho
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+BlkBrlHitA:	ld a,l
+		and 0BFh		; zrus flag "hlavneho" spritu v pohybe
+		ld l,a		; nazad do L
+		ld (bc),A		; a uloz do struktury
+		ld a,4		; prejdi na kod "kolizneho" spritu
+		add A,e
+		ld e,a		; (6) - kod spritu
+		ld A,(de)
+		and 10h		; ak je to Barrel,
+		ld a,l
+		jp NZ,BlkBrlHitB	; preskoc znizenie rychlosti
+		rra			; pre Block zniz rychlost
+BlkBrlHitB:	inc e; (7)
+		inc e		; (8) - rychlost spritu
+		or 40h		; nastav flag, ze je Block/Barrel v pohybe
+		ld (de),A		; uloz novu hodnotu
+		dec e		; (7) - smer spritu
+		dec c		; (7)
+		ld A,(bc)		; skopiruj smer z jedneho spritu
+		ld (de),A		; do druheho
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Zasiahnutie Block (0Ah), Barrel (1Ah) strelou.
@@ -1443,78 +1443,78 @@ BlkBrlHitB:	inr	e		; (7)
 ;       - Shot (01h), LasShot (11h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Block (0Ah), Barrel (1Ah)
-ShotBlkBrl:	mvi	a,-8		; presun sa na suradnicu Y Strely
-		add	c
-		mov	c,a		; (0)
-		mvi	a,0FEh		; deaktivuj strelu
-		stax	b
-		mvi	a,8		; vrat sa na rychlost
-		add	c
-		mov	c,a		; (8)
+ShotBlkBrl:	ld a,-8; presun sa na suradnicu Y Strely
+		add A,c
+		ld c,a		; (0)
+		ld a,0FEh		; deaktivuj strelu
+		ld (bc),A
+		ld a,8		; vrat sa na rychlost
+		add A,c
+		ld c,a		; (8)
 
 ; Narazenie Vrtona (00h) do Block (0Ah), Barrel (1Ah).
 ; I: BC=adresa +8 struktury "hlavneho" spritu
 ;       - Vorton (00h), Auto-Vorton (10h), Shot (01h), LasShot (11h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Block (0Ah), Barrel (1Ah)
-VortBlkBrl:	mvi	a,05h		; prejdi na sekvenciu spritu
-		add	e
-		mov	e,a		; (7) - smer spritu Vortona/Strely
-		dcr	c		; (7) - smer spritu Block/Barell
-		ldax	b		; skopiruj smer Vortona/Strely
-		stax	d		; do Block/Barell
-		inr	c		; (8) - rychlost Vortona/Strely
-		ldax	b
-		mov	l,a		; do L
-		dcr	e		; (6) - kod "kolizneho" spritu
-		ldax	d
-		ani	10h		; je to Barrel?
-		mov	a,l		;  - rychlost do A
-		jnz	VortBlkBrlA	; ano, skoc
-		rar			; vydel rychlost /2
-VortBlkBrlA:	inr	e		; (7)
-		inr	e		; (8)
-		ori	40h		; nastav, ze sprite je v pohybe
-		stax	d		; uloz novu rychlost
+VortBlkBrl:	ld a,05h; prejdi na sekvenciu spritu
+		add A,e
+		ld e,a		; (7) - smer spritu Vortona/Strely
+		dec c		; (7) - smer spritu Block/Barell
+		ld A,(bc)		; skopiruj smer Vortona/Strely
+		ld (de),A		; do Block/Barell
+		inc c		; (8) - rychlost Vortona/Strely
+		ld A,(bc)
+		ld l,a		; do L
+		dec e		; (6) - kod "kolizneho" spritu
+		ld A,(de)
+		and 10h		; je to Barrel?
+		ld a,l		;  - rychlost do A
+		jp NZ,VortBlkBrlA	; ano, skoc
+		rra			; vydel rychlost /2
+VortBlkBrlA:	inc e; (7)
+		inc e		; (8)
+		or 40h		; nastav, ze sprite je v pohybe
+		ld (de),A		; uloz novu rychlost
 
 ;---------------
 ; Vorton narazil do Auto-Vortona (10h), GlassBrick (07h, 17h), BrickB (08h), BrickA (18h).
 ; Z predosleho kodu Vorton/Strela narazili do Block (0Ah), Barrel (1Ah).
 ; I: BC=adresa +8 struktury "hlavneho" spritu
 ;       - Vorton (00h), Auto-Vorton (10h), Shot (01h), LasShot (11h)
-VortHit:	dcr	c		; (7)
-		dcr	c		; (6) - kod spritu
-		ldax	b		; do A
-		inr	c		; (7)
-		inr	c		; (8)
-		dcr	a		; je to Vorton alebo Strela?
-		jm	VortonHitV	; ano, je to Vorton, skoc dalej
-		jnz	NextMSprP	; ani jeden, skoc spracovat dalsi "hlavny" sprite
-		mvi	e,1<<4		; Snd4 pre Strelu
-		jmp	ProcSprG	; skoc pripravit zvuk
+VortHit:	dec c; (7)
+		dec c		; (6) - kod spritu
+		ld A,(bc)		; do A
+		inc c		; (7)
+		inc c		; (8)
+		dec a		; je to Vorton alebo Strela?
+		jp M,VortonHitV	; ano, je to Vorton, skoc dalej
+		jp NZ,NextMSprP	; ani jeden, skoc spracovat dalsi "hlavny" sprite
+		ld e,1<<4		; Snd4 pre Strelu
+		jp ProcSprG	; skoc pripravit zvuk
 					; a spracovat dalsi "hlavny" sprite
 
-VortonHitV:	lxi	d,0		; ziadny zvuk
-		lxi	h,ChngSpdDly
-		mov	a,m		; zdrzanie pri zmene rychlosti Vortona
-		cpi	7		; je to pociatocna hodnota?
-		jz	VortonHitN	; ano, skoc - bez zvuku
-		mvi	e,1<<4		; inak, naplanuj zvuk Snd4
-VortonHitN:	ldax	b		; (8)
-		ora	a		; CY=0
-		rar			; vydel /2 rychlost Vortona/Strely
-		stax	b		; a uloz
-		ora	a
-		jz	VortonHitZ	; ak je uz nulova, skoc vynulovat zdrzanie
-		mvi	d,2		; zdrzanie 3 kroky
-VortonHitZ:	mov	m,d		; uloz nove zdrzanie
-		jmp	ProcSprG	; skoc spracovat dalsi "hlavny" sprite
+VortonHitV:	ld de,0; ziadny zvuk
+		ld hl,ChngSpdDly
+		ld a,(HL)		; zdrzanie pri zmene rychlosti Vortona
+		cp 7		; je to pociatocna hodnota?
+		jp Z,VortonHitN	; ano, skoc - bez zvuku
+		ld e,1<<4		; inak, naplanuj zvuk Snd4
+VortonHitN:	ld A,(bc); (8)
+		or a		; CY=0
+		rra			; vydel /2 rychlost Vortona/Strely
+		ld (bc),A		; a uloz
+		or a
+		jp Z,VortonHitZ	; ak je uz nulova, skoc vynulovat zdrzanie
+		ld d,2		; zdrzanie 3 kroky
+VortonHitZ:	ld (HL),d; uloz nove zdrzanie
+		jp ProcSprG	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Prechod na dalsiu strukturu "kolizneho" spritu.
 ; I: DE=adresa +2 struktury "kolizneho" spritu
-NextCSpr:	xchg			; adresa struktury spritu +2 do HL
-		jmp	NextCSpr14	; prejdi na dalsi sprite
+NextCSpr:	ex DE,HL; adresa struktury spritu +2 do HL
+		jp NextCSpr14	; prejdi na dalsi sprite
 
 ;------------------------------------------------------------------------------
 ; Zasiahnutie Cyclop, Disk, Eye, Frog strelou.
@@ -1522,23 +1522,23 @@ NextCSpr:	xchg			; adresa struktury spritu +2 do HL
 ;       - Cyclop (02h), Disk (12h), Eye (03h), Disk (13h), Frog (04h), Frog (14h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Shot (01h), LasShot (11h)
-EnemyShot:	xchg			; adresa struktury spritu +2 do HL
-		dcx	h		; (1)
-		dcx	h		; (0)
-		mvi	m,0FEh		; deaktivuj Strelu
-		mvi	e,80h
-		ldax	b		; (8)
-		ora	e		; nastav flag - vybuch
-		stax	b
-		dcx	b		; (7)
-		dcx	b		; (6)
-		dcx	b		; (5)
-		mov	a,e		; nastav sprite Blast
-EnemyShotX:	stax	b
-		mvi	b,25		; zvys Score o 250 bodov
-		call	IncScore
-		mvi	e,1<<3		; naplanuj zvuk
-		jmp	ProcSprG	; skoc spracovat dalsi "hlavny" sprite
+EnemyShot:	ex DE,HL; adresa struktury spritu +2 do HL
+		dec hl		; (1)
+		dec hl		; (0)
+		ld (HL),0FEh		; deaktivuj Strelu
+		ld e,80h
+		ld A,(bc)		; (8)
+		or e		; nastav flag - vybuch
+		ld (bc),A
+		dec bc		; (7)
+		dec bc		; (6)
+		dec bc		; (5)
+		ld a,e		; nastav sprite Blast
+EnemyShotX:	ld (bc),A
+		ld b,25		; zvys Score o 250 bodov
+		call IncScore
+		ld e,1<<3		; naplanuj zvuk
+		jp ProcSprG	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Vorton narazil na pohybliveho nepriatela.
@@ -1547,42 +1547,42 @@ EnemyShotX:	stax	b
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Cyclop (02h), Disk (12h), Eye (03h), Disk (13h), Frog (04h),
 ;       - Frog (14h), Star (05h), Cyclop (15h), Flame (06h), Rough (16h)
-VortBlast:	xchg			; adresa struktury spritu +2 do HL
-		mvi	a,6		; +6
-		add	l
-		mov	l,a		; (8) - rychlost
-		mov	a,m		; rychlost do A
-		ora	a		; uz je tento sprite v procese vybuchu?
-		jm	NextCSpr8	; ano, skoc spracovat dalsi "kolizny" sprite
-		dcr	l		; (7)
-		dcr	l		; (6) - kod spritu
-		mov	d,m		; kod spritu do D
-		mvi	a,-6		; -6
-		add	l
-		mov	l,a		; (0)
-		mov	a,d		; kod spritu
-		cpi	16h		; je to Rough?
-		jz	VortHit		; ano, skoc osetrit naraz
-		cpi	06h		; je to Flame?
-		jz	VortBlastB	; ano, preskoc deaktivovanie spritu
-		cpi	05h		; je to Star?
-		jz	VortBlastB	; ano, preskoc deaktivovanie spritu
-		mvi	m,0FEh		; deaktivuj sprite, ktory znicil Vortona
-	#if CheatLife
-VortBlastB:	jmp	NextCSpr16
-	#else
-VortBlastB:	mvi	e,80h
-		ldax	b
-		ora	e		; nastav flag - vybuch
-		stax	b
-		dcx	b		; (7)
-		dcx	b		; (6)
-		dcx	b		; (5)
-		mov	a,e
-		stax	b		; nastav sprite Blast
-		mvi	e,1<<6		; naplanuj zvuk vybuchu
-		jmp	ProcSprG	; skoc spracovat dalsi "hlavny" sprite
-	#endif
+VortBlast:	ex DE,HL; adresa struktury spritu +2 do HL
+		ld a,6		; +6
+		add A,l
+		ld l,a		; (8) - rychlost
+		ld a,(HL)		; rychlost do A
+		or a		; uz je tento sprite v procese vybuchu?
+		jp M,NextCSpr8	; ano, skoc spracovat dalsi "kolizny" sprite
+		dec l		; (7)
+		dec l		; (6) - kod spritu
+		ld d,(HL)		; kod spritu do D
+		ld a,-6		; -6
+		add A,l
+		ld l,a		; (0)
+		ld a,d		; kod spritu
+		cp 16h		; je to Rough?
+		jp Z,VortHit		; ano, skoc osetrit naraz
+		cp 06h		; je to Flame?
+		jp Z,VortBlastB	; ano, preskoc deaktivovanie spritu
+		cp 05h		; je to Star?
+		jp Z,VortBlastB	; ano, preskoc deaktivovanie spritu
+		ld (HL),0FEh		; deaktivuj sprite, ktory znicil Vortona
+	if CheatLife
+VortBlastB:	jp NextCSpr16
+	else
+VortBlastB:	ld e,80h
+		ld A,(bc)
+		or e		; nastav flag - vybuch
+		ld (bc),A
+		dec bc		; (7)
+		dec bc		; (6)
+		dec bc		; (5)
+		ld a,e
+		ld (bc),A		; nastav sprite Blast
+		ld e,1<<6		; naplanuj zvuk vybuchu
+		jp ProcSprG	; skoc spracovat dalsi "hlavny" sprite
+	endif
 
 ;------------------------------------------------------------------------------
 ; Zasiahnutie Cyclop, Disk, Eye, Frog strelou.
@@ -1590,33 +1590,33 @@ VortBlastB:	mvi	e,80h
 ;       - Shot (01h), LasShot (11h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Cyclop (02h), Disk (12h), Eye (03h), Disk (13h), Frog (04h), Frog (14h)
-ShotEnemy:	xchg			; adresa struktury spritu +2 do HL
-		mvi	a,6		; +6
-		add	l
-		mov	l,a		; (8) - rychlost
-		mov	a,m		; rychlost do A
-		ora	a		; uz je tento sprite v procese vybuchu?
-		jm	NextCSpr8	; ano, skoc spracovat dalsi "kolizny" sprite
-		lxi	d,0FE80h
-		ora	e		; nastav flag - vybuch
-		mov	m,a
-		dcr	l		; (7)
-		dcr	l		; (6)
-		dcr	l		; (5)
-		mov	m,e		; nastav sprite Blast
-		mvi	a,-8
-		add	c
-		mov	c,a
-		mov	a,d
-		jmp	EnemyShotX	; deaktivuj sprite Strely, naplanuj zvuk
+ShotEnemy:	ex DE,HL; adresa struktury spritu +2 do HL
+		ld a,6		; +6
+		add A,l
+		ld l,a		; (8) - rychlost
+		ld a,(HL)		; rychlost do A
+		or a		; uz je tento sprite v procese vybuchu?
+		jp M,NextCSpr8	; ano, skoc spracovat dalsi "kolizny" sprite
+		ld de,0FE80h
+		or e		; nastav flag - vybuch
+		ld (HL),a
+		dec l		; (7)
+		dec l		; (6)
+		dec l		; (5)
+		ld (HL),e		; nastav sprite Blast
+		ld a,-8
+		add A,c
+		ld c,a
+		ld a,d
+		jp EnemyShotX	; deaktivuj sprite Strely, naplanuj zvuk
 					; a prejdi na dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Prechod na dalsiu strukturu "kolizneho" spritu.
 ; I: HL=adresa +8 struktury spritu
-NextCSpr8:	lxi	d,8		; offset +8
-		dad	d
-		jmp	NextCSpr0	; prejdi na dalsi sprite
+NextCSpr8:	ld de,8; offset +8
+		add HL,de
+		jp NextCSpr0	; prejdi na dalsi sprite
 
 ;------------------------------------------------------------------------------
 ; Rozbijanie BrickB (08h) a BrickA (18h) strelou.
@@ -1624,38 +1624,38 @@ NextCSpr8:	lxi	d,8		; offset +8
 ;       - Shot (01h), LasShot (11h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - BrickB (08h) a BrickA (18h)
-ShotBrick:	xchg			; adresa struktury spritu +2 do HL
-		mvi	a,6		; +6
-		add	l
-		mov	l,a		; (8) - rychlost
-		mov	a,m		; rychlost do A
-		ora	a		; uz je tento sprite v procese vybuchu?
-		jm	NextCSpr8	; ano, skoc spracovat dalsi "kolizny" sprite
-		mvi	a,-8
-		add	c
-		mov	c,a		; (0)
-		mvi	a,0FEh		; deaktivuj sprite Strely
-		stax	b
-		dcr	l		; (7)
-		dcr	l		; (6) - kod spritu
-		lxi	b,8060h		; offset konca sekvencie BrickB
-		mov	a,m
-		ani	10h		; je to BrickB ?
-		jz	ShotBrickB	; ano, skoc
-		mvi	c,0EEh		; offset konca sekvencie BrickA
-ShotBrickB:	dcr	l		; (5) - sekvencia spritu
-		mov	a,m		; posun sa na dalsiu sekvenciu spritu
-		adi	2
-		mov	m,a
-		cmp	c		; uz boli vsetky sekvencie?
-		jc	ShotBrickX	; nie, skoc dalej
-		mov	m,b		; inak, nastav sprite Blast
-		inr	l		; (6)
-		inr	l		; (7)
-		inr	l		; (8)
-		mov	m,b		; nastav flag - vybuch
-ShotBrickX:	mvi	e,1<<7		; naplanuj zvuk
-		jmp	ProcSprG	; skoc spracovat dalsi "hlavny" sprite
+ShotBrick:	ex DE,HL; adresa struktury spritu +2 do HL
+		ld a,6		; +6
+		add A,l
+		ld l,a		; (8) - rychlost
+		ld a,(HL)		; rychlost do A
+		or a		; uz je tento sprite v procese vybuchu?
+		jp M,NextCSpr8	; ano, skoc spracovat dalsi "kolizny" sprite
+		ld a,-8
+		add A,c
+		ld c,a		; (0)
+		ld a,0FEh		; deaktivuj sprite Strely
+		ld (bc),A
+		dec l		; (7)
+		dec l		; (6) - kod spritu
+		ld bc,8060h		; offset konca sekvencie BrickB
+		ld a,(HL)
+		and 10h		; je to BrickB ?
+		jp Z,ShotBrickB	; ano, skoc
+		ld c,0EEh		; offset konca sekvencie BrickA
+ShotBrickB:	dec l; (5) - sekvencia spritu
+		ld a,(HL)		; posun sa na dalsiu sekvenciu spritu
+		add A,2
+		ld (HL),a
+		cp c		; uz boli vsetky sekvencie?
+		jp C,ShotBrickX	; nie, skoc dalej
+		ld (HL),b		; inak, nastav sprite Blast
+		inc l		; (6)
+		inc l		; (7)
+		inc l		; (8)
+		ld (HL),b		; nastav flag - vybuch
+ShotBrickX:	ld e,1<<7; naplanuj zvuk
+		jp ProcSprG	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Движущийся враг врезался в Вортона.
@@ -1664,38 +1664,38 @@ ShotBrickX:	mvi	e,1<<7		; naplanuj zvuk
 ;       - Frog (04h), Frog (14h), Star (05h), Cyclop (15h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Vortona (00h), Auto-Vortona (10h)
-EnemyBlast:	dcx	b		; (7)
-		dcx	b		; (6)
-		ldax	b		; kod spritu
-		cpi	5		; je to Star?
-		jz	EnemyBlastD	; ano, preskoc deaktivovanie spritu
-		mvi	a,-6
-		add	c
-		mov	c,a		; (0)
-		mvi	a,0FEh
-		stax	b		; deaktivuj sprite
-EnemyBlastD:	xchg			; adresa struktury Vortona +2 do HL
-		mvi	e,80h
-		inr	l		; (3)
-		inr	l		; (4)
-		inr	l		; (5) - sekvencia spritu
-		mov	a,m		; do A
-		cmp	e		; prebieha uz vybuch?
-	#if ~~CheatLife
-		jc	EnemyBlastB	; nie, skoc dalej
-	#endif
-		dcr	l		; (4)
-		dcr	l		; (3)
-		dcr	l		; (2)
-		jmp	NextCSpr14	; prejdi na dalsi sprite
+EnemyBlast:	dec bc; (7)
+		dec bc		; (6)
+		ld A,(bc)		; kod spritu
+		cp 5		; je to Star?
+		jp Z,EnemyBlastD	; ano, preskoc deaktivovanie spritu
+		ld a,-6
+		add A,c
+		ld c,a		; (0)
+		ld a,0FEh
+		ld (bc),A		; deaktivuj sprite
+EnemyBlastD:	ex DE,HL; adresa struktury Vortona +2 do HL
+		ld e,80h
+		inc l		; (3)
+		inc l		; (4)
+		inc l		; (5) - sekvencia spritu
+		ld a,(HL)		; do A
+		cp e		; prebieha uz vybuch?
+	if ~~CheatLife
+		jp C,EnemyBlastB	; nie, skoc dalej
+	endif
+		dec l		; (4)
+		dec l		; (3)
+		dec l		; (2)
+		jp NextCSpr14	; prejdi na dalsi sprite
 
-EnemyBlastB:	mov	m,e		; nastav sprite Blast
-		inr	l		; (6)
-		inr	l		; (7)
-		inr	l		; (8) - rychlost
-		mov	m,e		; nastav flag - vybuch
-		mvi	e,1<<6		; naplanuj zvuk
-		jmp	ProcSprG	; skoc spracovat dalsi "hlavny" sprite
+EnemyBlastB:	ld (HL),e; nastav sprite Blast
+		inc l		; (6)
+		inc l		; (7)
+		inc l		; (8) - rychlost
+		ld (HL),e		; nastav flag - vybuch
+		ld e,1<<6		; naplanuj zvuk
+		jp ProcSprG	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Strela, ktora je na zaciatku letu este v kolizii s Vortonom (00h) sa necha
@@ -1705,16 +1705,16 @@ EnemyBlastB:	mov	m,e		; nastav sprite Blast
 ;       - Vortona (00h), Auto-Vortona (10h), Star (05h), Cyclop (15h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Shot (01h), LasShot (11h)
-ShotFlyOffV:	xchg			; adresa +2 druheho spritu do HL
-		inx	b		; (9)
-		inx	b		; (10)
-		ldax	b		; offset na Seq
-		cpi	0Eh		; je to Vorton? - po vystrele je strela
-		jz	NextCSpr14	;  este v kolizii s Vortonom
-		dcr	l		; (1)
-		dcr	l		; (0)
-		mvi	m,0FEh		; deaktivuj Strelu
-		jmp	NextCSpr16	; prejdi na dalsi sprite
+ShotFlyOffV:	ex DE,HL; adresa +2 druheho spritu do HL
+		inc bc		; (9)
+		inc bc		; (10)
+		ld A,(bc)		; offset na Seq
+		cp 0Eh		; je to Vorton? - po vystrele je strela
+		jp Z,NextCSpr14	;  este v kolizii s Vortonom
+		dec l		; (1)
+		dec l		; (0)
+		ld (HL),0FEh		; deaktivuj Strelu
+		jp NextCSpr16	; prejdi na dalsi sprite
 
 ;------------------------------------------------------------------------------
 ; Strela, ktora je na zaciatku letu este v kolizii s Vortonom (00h) sa necha
@@ -1724,61 +1724,61 @@ ShotFlyOffV:	xchg			; adresa +2 druheho spritu do HL
 ;       - Shot (01h), LasShot (11h)
 ;    DE=adresa +2 struktury "kolizneho" spritu
 ;       - Vortona (00h), Auto-Vortona (10h), Star (05h), Cyclop (15h)
-ShotFlyOff:	xchg			; adresa +2 druheho spritu do HL
-		mvi	a,8		; +8
-		add	l
-		mov	l,a
-		mov	a,m		; (10) - offset na Seq
-		cpi	0Eh		; je to Vorton? - po vystrele je strela
-		jnz	ShotOff		;  este v kolizii s Vortonom
-		lxi	d,6		; ano, je to Vorton
-		dad	d		; posun na dalsi sprite
-		jmp	NextCSpr0	; skoc spracovat dalsi sprite
+ShotFlyOff:	ex DE,HL; adresa +2 druheho spritu do HL
+		ld a,8		; +8
+		add A,l
+		ld l,a
+		ld a,(HL)		; (10) - offset na Seq
+		cp 0Eh		; je to Vorton? - po vystrele je strela
+		jp NZ,ShotOff		;  este v kolizii s Vortonom
+		ld de,6		; ano, je to Vorton
+		add HL,de		; posun na dalsi sprite
+		jp NextCSpr0	; skoc spracovat dalsi sprite
 
 ;------------------------------------------------------------------------------
 ; Deaktivovanie spritu (Strely).
 ; I: (SP)=adresa struktury spritu (Shot (01h), LasShot (11h))
-ShotOff:	pop	h
-		mvi	m,0FEh		; deaktivuj sprite
-		jmp	NextMSpr	; skoc spracovat dalsi "hlavny" sprite
+ShotOff:	pop hl
+		ld (HL),0FEh		; deaktivuj sprite
+		jp NextMSpr	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Nahodna zmena smeru po narazeni do ineho spritu,
 ; ale vzdy iba "v pravom uhle" - V, J, Z, S
 ; I: BC=adresa +8 struktury "hlavneho" spritu
 ;       - Cyclop (02h), Disk (12h)
-ChDir2:		call	Rand		; nahodna hodnota do A
-		ani	6		; odmaskuj iba potrebny rozsah
-		dcx	b		; (7) - smer spritu
-		stax	b		; a uloz ako novu hodnotu smeru
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+ChDir2:		call Rand; nahodna hodnota do A
+		and 6		; odmaskuj iba potrebny rozsah
+		dec bc		; (7) - smer spritu
+		ld (bc),A		; a uloz ako novu hodnotu smeru
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Nahodna zmena smeru po narazeni do ineho spritu - do vsetkych smerov.
 ; I: BC=adresa +8 struktury "hlavneho" spritu
 ;       - Eye (03h), Disk (13h)
-ChDir3:		call	Rand		; nahodna hodnota do A
-		ani	7		; odmaskuj iba potrebny rozsah
-		dcx	b		; (7) - smer spritu
-		stax	b		; a uloz ako novu hodnotu smeru
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+ChDir3:		call Rand; nahodna hodnota do A
+		and 7		; odmaskuj iba potrebny rozsah
+		dec bc		; (7) - smer spritu
+		ld (bc),A		; a uloz ako novu hodnotu smeru
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Случайное изменение направления после столкновения с другим объектом.
 ; I: BC=adresa +8 struktury "hlavneho" spritu
 ;       - Frog (04h), Frog (14h)
-ChDir4:		mov	e,c		; presun adresu do DE
-		mov	d,b
+ChDir4:		ld e,c; presun adresu do DE
+		ld d,b
 ;ChDir4Y:	mvi	a,0		; Y po kolizii
 ;		cpi	49h		; ak by bola po posune Y suradnica
 ;		jnc	ChDir4D		; mimo rozsah <0, 48h>, skoc dalej
-		mvi	a,4
-		add	e
-		mov	e,a		; (12) - init hodnota smeru
-		call	Rand		; nahodna hodnota do A
-		ani	7		; odmaskuj iba potrebny rozsah
-		stax	d		; a uloz ako init hodnotu smeru
-		jmp	ProcSprNoCollD	; pokracuj zmenou smeru spritu Frog
+		ld a,4
+		add A,e
+		ld e,a		; (12) - init hodnota smeru
+		call Rand		; nahodna hodnota do A
+		and 7		; odmaskuj iba potrebny rozsah
+		ld (de),A		; a uloz ako init hodnotu smeru
+		jp ProcSprNoCollD	; pokracuj zmenou smeru spritu Frog
 
 ; Sprite Frog (04h) mal tendenciu zaseknut sa pri Severnom alebo Juznom okraji
 ; drahy. Dovodom je zrejme rutina Rand, ktora sa lisi od povodnej zo ZX Spectra.
@@ -1794,179 +1794,179 @@ ChDir4:		mov	e,c		; presun adresu do DE
 ; Zmena smeru na opacny.
 ; I: BC=adresa +8 struktury "hlavneho" spritu
 ;       - Star (05h), Cyclop (15h)
-ChDir5:		dcx	b		; (7) - smer spritu
-		ldax	b		; vezmi aktualny smer
-		adi	4		; zmen na opacny
-		ani	7		; odmaskuj iba potrebny rozsah
-		stax	b		; a uloz novu hodnotu smeru
-		jmp	NextMSprP	; skoc spracovat dalsi "hlavny" sprite
+ChDir5:		dec bc; (7) - smer spritu
+		ld A,(bc)		; vezmi aktualny smer
+		add A,4		; zmen na opacny
+		and 7		; odmaskuj iba potrebny rozsah
+		ld (bc),A		; a uloz novu hodnotu smeru
+		jp NextMSprP	; skoc spracovat dalsi "hlavny" sprite
 
 ;------------------------------------------------------------------------------
 ; Обработка движения Lasertron.
-LTronMove:	lxi	h,SprStructLT+8	; adresa rychlosti Lasertronu
-		mov	a,m
-		ana	a		; je nulova?
-		jz	LTronMoveE	; ano, skoc dalej
-		lxi	h,SprStructLT+2	; adresa pozicie LT
-		mov	b,m		; pozicia LT do BC
-		dcr	l		; (1)
-		mov	c,m
-		dcr	l		; (0)
-		lxi	d,-16		; offset na predchadzajuceho Auto-Vortona
-		mvi	a,4		; 4 Auto-Vortoni
-		jmp	LTronMoveB
+LTronMove:	ld hl,SprStructLT+8; adresa rychlosti Lasertronu
+		ld a,(HL)
+		and a		; je nulova?
+		jp Z,LTronMoveE	; ano, skoc dalej
+		ld hl,SprStructLT+2	; adresa pozicie LT
+		ld b,(HL)		; pozicia LT do BC
+		dec l		; (1)
+		ld c,(HL)
+		dec l		; (0)
+		ld de,-16		; offset na predchadzajuceho Auto-Vortona
+		ld a,4		; 4 Auto-Vortoni
+		jp LTronMoveB
 
-LTronMoveA:	mvi	a,4		; pocitadlo AV vrat do A
-		dcr	a		; zniz pocitadlo
-		jz	LTronMoveC	; ak uz nie je aktivny ziadny AV, skoc
-LTronMoveB:	sta	LTronMoveA+1	; odpamataj pocitadlo AV
-		dad	d		; posun sa na strukturu AV
-		mov	a,m		; (0) - Y pozicia AV
-		cpi	0FEh		; je aktivny tento AV?
-		jnc	LTronMoveA	; nie, skoc skusit dalsieho
-		mvi	a,6		; posun sa na kod spritu
-		add	l
-		mov	l,a
-		mov	a,m		; (6) - kod spritu
-		ana	a		; je to uz Hlavny Vorton ?
-		jz	LTronMoveC	; ano, skoc dalej
-		mvi	a,-4
-		add	l
-		mov	l,a		; (2)
-		mov	d,m		; - XH
-		dcr	l		; (1)
-		mov	e,m		; - XL
-		call	SubDEBC		; porovnaj vdialenost medzi AV a LT
+LTronMoveA:	ld a,4; pocitadlo AV vrat do A
+		dec a		; zniz pocitadlo
+		jp Z,LTronMoveC	; ak uz nie je aktivny ziadny AV, skoc
+LTronMoveB:	ld (LTronMoveA+1),A; odpamataj pocitadlo AV
+		add HL,de		; posun sa na strukturu AV
+		ld a,(HL)		; (0) - Y pozicia AV
+		cp 0FEh		; je aktivny tento AV?
+		jp NC,LTronMoveA	; nie, skoc skusit dalsieho
+		ld a,6		; posun sa na kod spritu
+		add A,l
+		ld l,a
+		ld a,(HL)		; (6) - kod spritu
+		and a		; je to uz Hlavny Vorton ?
+		jp Z,LTronMoveC	; ano, skoc dalej
+		ld a,-4
+		add A,l
+		ld l,a		; (2)
+		ld d,(HL)		; - XH
+		dec l		; (1)
+		ld e,(HL)		; - XL
+		call SubDEBC		; porovnaj vdialenost medzi AV a LT
 					; rozdiel vzdialenosti moze byt max 10h
-		inr	a		; ak je vacsi,
-		jnz	LTronMoveC	;  skoc skusit Hlavneho Vortona
-		mov	a,e
-		cpi	0F0h		; ak je v rozsahu,
-		jnc	LTronMoveF	;  skoc spracovat posun LT
+		inc a		; ak je vacsi,
+		jp NZ,LTronMoveC	;  skoc skusit Hlavneho Vortona
+		ld a,e
+		cp 0F0h		; ak je v rozsahu,
+		jp NC,LTronMoveF	;  skoc spracovat posun LT
 
 		; test, ci je Hlavny Vorton pred Lasertronom
-LTronMoveC:	lhld	VortonStruct	; adresa struktury aktualneho Vortona do HL
-		mov	a,m		; aby mohol Vorton tlacit LT, Y pozicia
-		cpi	2Ch		;  musi byt v intervale <1Dh, 2Bh>
-		jnc	LTronMoveD	; ak nie je, skoc dalej
-		cpi	1Dh
-		jc	LTronMoveD
-		inr	l		; (1)
-		mov	e,m
-		inr	l		; (2)
-		mov	d,m		; X pozicia Vortona do DE
-		call	SubDEBC		; porovnaj vdialenost medzi Vortonom a LT
+LTronMoveC:	ld HL,(VortonStruct); adresa struktury aktualneho Vortona do HL
+		ld a,(HL)		; aby mohol Vorton tlacit LT, Y pozicia
+		cp 2Ch		;  musi byt v intervale <1Dh, 2Bh>
+		jp NC,LTronMoveD	; ak nie je, skoc dalej
+		cp 1Dh
+		jp C,LTronMoveD
+		inc l		; (1)
+		ld e,(HL)
+		inc l		; (2)
+		ld d,(HL)		; X pozicia Vortona do DE
+		call SubDEBC		; porovnaj vdialenost medzi Vortonom a LT
 					; rozdiel vzdialenosti moze byt max 10h
-		inr	a		; ak je vacsi,
-		jnz	LTronMoveD	;  skoc zastavit LT
-		mov	a,e
-		cpi	0F0h		; ak je v rozsahu,
-		jnc	LTronMoveF	;  skoc spracovat posun LT
+		inc a		; ak je vacsi,
+		jp NZ,LTronMoveD	;  skoc zastavit LT
+		ld a,e
+		cp 0F0h		; ak je v rozsahu,
+		jp NC,LTronMoveF	;  skoc spracovat posun LT
 
-LTronMoveD:	xra	a		; attr. pre "zhasnutie" sipky nad LT na panely
-		sta	SprStructLT+8	; zastav LT - vynuluj jeho Rychlost
-LTronMoveE:	mov	h,a
-		mov	l,a
-LTronMoveG:	lxi	d,HILO(24,16)
-		mov	a,h
-		call	Print88
-		mov	a,l
-		jmp	Print88
+LTronMoveD:	xor a; attr. pre "zhasnutie" sipky nad LT na panely
+		ld (SprStructLT+8),A	; zastav LT - vynuluj jeho Rychlost
+LTronMoveE:	ld h,a
+		ld l,a
+LTronMoveG:	ld de, (24<<8)|16
+		ld a,h
+		call Print88
+		ld a,l
+		jp Print88
 
-LTronMoveF:	lda	LTronStep	; pocitadlo krokov LT
-		inr	a		; inkrement
-		ani	7		; uprav na rozsah <0, 7>
-		sta	LTronStep	; uloz novu hodnotu
-		jz	LTronMoveE	; ak je nulova, skoc zhasnut sipku
-		cpi	4		; ak ma polovicnu hodnotu,
-		rnz
-		mvi	b,1		; zvys Score o 10 bodov
-		call	IncScore
-		lxi	h,HILO(27,28)	; znaky sipky nad LT na panely
-		jmp	LTronMoveG	; skoc zobrazit sipku
+LTronMoveF:	ld A,(LTronStep); pocitadlo krokov LT
+		inc a		; inkrement
+		and 7		; uprav na rozsah <0, 7>
+		ld (LTronStep),A	; uloz novu hodnotu
+		jp Z,LTronMoveE	; ak je nulova, skoc zhasnut sipku
+		cp 4		; ak ma polovicnu hodnotu,
+		ret NZ
+		ld b,1		; zvys Score o 10 bodov
+		call IncScore
+		ld hl, (27<<8)|28
+		jp LTronMoveG	; skoc zobrazit sipku
 
 ;------------------------------------------------------------------------------
-IncPower:	push	d		; odpamataj pouzivane registre
-		push	b
-		push	psw
-		lda	PowerIndik	; stlpec posledneho dielika POWER
-		inr	a		; inkrementuj
-		sta	PowerIndik	; a uloz novu hodnotu
-		mov	e,a		; stlpec
-		mvi	d,24		; a riadok pre POWER
-		adi	2		; kod znaku pre konkretny znak POWER
-		call	Print88		; zobraz znak
-		pop	psw		; obnov registre
-		pop	b
-		pop	d
+IncPower:	push de; odpamataj pouzivane registre
+		push bc
+		push af
+		ld A,(PowerIndik)	; stlpec posledneho dielika POWER
+		inc a		; inkrementuj
+		ld (PowerIndik),A	; a uloz novu hodnotu
+		ld e,a		; stlpec
+		ld d,24		; a riadok pre POWER
+		add A,2		; kod znaku pre konkretny znak POWER
+		call Print88		; zobraz znak
+		pop af		; obnov registre
+		pop bc
+		pop de
 		ret
 
 ;------------------------------------------------------------------------------
-IncScore:	lxi	h,Score+5	; adresa Score - desiatky
-		lxi	d,10		; D=0, E=10
-IncScoreA:	mov	a,m		; vezmi cislicu
-		cmp	e		; je to medzera?
-		jnz	IncScoreB	; nie, skoc dalej
-		xra	a		; z medzery bude cislica 0
-IncScoreB:	inr	a		; inkrementuj cislicu
-		cmp	e		; naplnil sa tento rad?
-		jnz	IncScoreC	; nie, skoc dalej
-		mov	m,d		; ano, nastav ho na nulu
-		dcx	h		; presun sa na dalsi rad (cislicu)
-		jmp	IncScoreA
+IncScore:	ld hl,Score+5; adresa Score - desiatky
+		ld de,10		; D=0, E=10
+IncScoreA:	ld a,(HL); vezmi cislicu
+		cp e		; je to medzera?
+		jp NZ,IncScoreB	; nie, skoc dalej
+		xor a		; z medzery bude cislica 0
+IncScoreB:	inc a; inkrementuj cislicu
+		cp e		; naplnil sa tento rad?
+		jp NZ,IncScoreC	; nie, skoc dalej
+		ld (HL),d		; ano, nastav ho na nulu
+		dec hl		; presun sa na dalsi rad (cislicu)
+		jp IncScoreA
 
-IncScoreC:	mov	m,a		; uloz novu hodnotu
-		dcr	b
-		jnz	IncScore	; opakuj pre celu vysku inkrementu
+IncScoreC:	ld (HL),a; uloz novu hodnotu
+		dec b
+		jp NZ,IncScore	; opakuj pre celu vysku inkrementu
 
-		jmp	PrtScore	; zobraz novu hodnotu
-
-;------------------------------------------------------------------------------
-InitSpdLvl:	lda	SpeedLevel	; uroven rychlosti
-		ora	a		; ak je 0
-		rz			; nerob nic
-		dcr	a		; inak zniz o 1 uroven
-		sta	SpeedLevel	; a uloz
-		lxi	h,SprList+6	; adresa zoznamu spritov
-		lxi	d,16		; offset na dalsiu strukturu
-InitSpdLvlA:	mov	a,m		; (6) - kod spritu
-		ani	0Fh		; ponechaj zakladny kod
-		cpi	5		; vybranym pohyblivym spritom
-		jnc	InitSpdLvlB
-		inx	h		; (7)
-		inx	h		; (8)
-		dcr	m		; zniz bazovu rychlost
-		dcx	h		; (7)
-		dcx	h		; (6)
-InitSpdLvlB:	dad	d
-		mov	a,h		; az po Vortonov a spol
-		cpi	SprListVL/256
-		jc	InitSpdLvlA
-		jmp	InitSpdLvl	; opakuj, kym nebude SpeedLevel 0
+		jp PrtScore	; zobraz novu hodnotu
 
 ;------------------------------------------------------------------------------
-CheckScore:	lxi	h,HiScore	; porovnaj Score a HiScore
-		lxi	d,Score
-		mvi	b,7		; 7 cislic
-CheckScoreA:	ldax	d		; cislica Score
-		cmp	m		; porovnaj s HiScore
-		jz	CheckScoreB	; su rovnake, prejdi na dalsiu cislicu
-		jnc	CheckScoreC	; cislica Score > HiScore, skoc
-		mov	a,m		; cislica HiScore > Score
-		cpi	10		; ak je cislica HiScore medzera,
-		jz	CheckScoreD	;  Score > HiScore, skoc
-CheckScoreB:	inx	h		; dalsia cislica
-		inx	d
-		dcr	b
-		jnz	CheckScoreA
-		jmp	PrtHiScore
+InitSpdLvl:	ld A,(SpeedLevel); uroven rychlosti
+		or a		; ak je 0
+		ret Z			; nerob nic
+		dec a		; inak zniz o 1 uroven
+		ld (SpeedLevel),A	; a uloz
+		ld hl,SprList+6	; adresa zoznamu spritov
+		ld de,16		; offset na dalsiu strukturu
+InitSpdLvlA:	ld a,(HL); (6) - kod spritu
+		and 0Fh		; ponechaj zakladny kod
+		cp 5		; vybranym pohyblivym spritom
+		jp NC,InitSpdLvlB
+		inc hl		; (7)
+		inc hl		; (8)
+		dec (HL)		; zniz bazovu rychlost
+		dec hl		; (7)
+		dec hl		; (6)
+InitSpdLvlB:	add HL,de
+		ld a,h		; az po Vortonov a spol
+		cp SprListVL/256
+		jp C,InitSpdLvlA
+		jp InitSpdLvl	; opakuj, kym nebude SpeedLevel 0
 
-CheckScoreC:	cpi	10		; ak je cislica Score medzera,
-		jz	PrtHiScore	;  HiScore > Score, skoc
-CheckScoreD:	lxi	h,Score		; Score > HiScore
-		lxi	d,HiScore	;  skopiruj Score do HiScore
-		mvi	b,7		; 7 cislic
-		call	Copy8
-		jmp	PrtHiScore	
+;------------------------------------------------------------------------------
+CheckScore:	ld hl,HiScore; porovnaj Score a HiScore
+		ld de,Score
+		ld b,7		; 7 cislic
+CheckScoreA:	ld A,(de); cislica Score
+		cp (HL)		; porovnaj s HiScore
+		jp Z,CheckScoreB	; su rovnake, prejdi na dalsiu cislicu
+		jp NC,CheckScoreC	; cislica Score > HiScore, skoc
+		ld a,(HL)		; cislica HiScore > Score
+		cp 10		; ak je cislica HiScore medzera,
+		jp Z,CheckScoreD	;  Score > HiScore, skoc
+CheckScoreB:	inc hl; dalsia cislica
+		inc de
+		dec b
+		jp NZ,CheckScoreA
+		jp PrtHiScore
+
+CheckScoreC:	cp 10; ak je cislica Score medzera,
+		jp Z,PrtHiScore	;  HiScore > Score, skoc
+CheckScoreD:	ld hl,Score; Score > HiScore
+		ld de,HiScore	;  skopiruj Score do HiScore
+		ld b,7		; 7 cislic
+		call Copy8
+		jp PrtHiScore
 
 ;------------------------------------------------------------------------------

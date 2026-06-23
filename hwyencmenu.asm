@@ -26,209 +26,209 @@ GridHeightM	.equ	147
 ;InnerScrSizeM	.equ	(GridHeightM+11)*SVO
 
 ;------------------------------------------------------------------------------
-Menu:		lxi	h,4533h		; pipni podla HL
-		call	Beep
-MenuW:		call	WaitNoKey	; pockaj na uvolnenie klavesov
+Menu:		ld hl,4533h; pipni podla HL
+		call Beep
+MenuW:		call WaitNoKey; pockaj na uvolnenie klavesov
 
-MenuD:		call	DrawGridM	; vykresli mriezku do vnutornej obr.
+MenuD:		call DrawGridM; vykresli mriezku do vnutornej obr.
 
-		call	Cls		; zmaz obrazovku
- 		mvi	l,155		; a vykresli vnutornu obrazovku
-		lxi	d,InnerScr+(3*SVO)
-		lxi	b,BaseVramAdr+(256-18)
-		call	DrawInnerScr
+		call Cls		; zmaz obrazovku
+ 		ld l,155		; a vykresli vnutornu obrazovku
+		ld de,InnerScr+(3*SVO)
+		ld bc,BaseVramAdr+(256-18)
+		call DrawInnerScr
 
-		call	AnimateLabel	; zobraz animovany nadpis
-		lxi	h,TMenu		; adresa Menu textu
-		call	Print85Text	; zobraz text
+		call AnimateLabel	; zobraz animovany nadpis
+		ld hl,TMenu		; adresa Menu textu
+		call Print85Text	; zobraz text
 
-	#if UsePackedGrp
-		lxi	h,LogoVortex	; rozpakuj logo Vortex
-		lxi	d,0C000h-LogoVortexSize
-		call	dzx7
-		lxi	h,BaseVramAdr+1	; vykrelenie loga Vortex
-		lxi	d,0C000h-LogoVortexSize
-		lxi	b,11*256+56
-		call	DrawSprite
-	#else
-		lxi	h,BaseVramAdr+HILO(1,255)	; vykrelenie loga Vortex
-		lxi	d,LogoVortex
-		lxi	b,HILO(8,56)
-		call	DrawSprite
-	#endif
+	if UsePackedGrp
+		ld hl,LogoVortex	; rozpakuj logo Vortex
+		ld de,0C000h-LogoVortexSize
+		call dzx7
+		ld hl,BaseVramAdr+1	; vykrelenie loga Vortex
+		ld de,0C000h-LogoVortexSize
+		ld bc,11*256+56
+		call DrawSprite
+	else
+		ld hl,BaseVramAdr+ (1<<8)|255
+		ld de,LogoVortex
+		ld bc, (8<<8)|56
+		call DrawSprite
+	endif
 
-MenuOpt:	call	WaitNoKey
-MenuOptC:	lxi	b,4		; test klavesov 1 az 5
-MenuOptA:	mov	a,c
+MenuOpt:	call WaitNoKey
+MenuOptC:	ld bc,4; test klavesov 1 az 5
+MenuOptA:	ld a,c
 ;		out	SysPA
 ;		in	SysPB
-		ani	2
-		jz	MenuOptB
-		dcr	c
-		jp	MenuOptA
-	#if ~~Release
+		and 2
+		jp Z,MenuOptB
+		dec c
+		jp P,MenuOptA
+	if ~~Release
 ;		in	SysPB
 ;		ani	40h
 ;		rz
-	#endif
-		jmp	MenuOptC
+	endif
+		jp MenuOptC
 
-MenuOptB:	lxi	h,MenuOptRut
-		dad	b
-		dad	b
-		mov	e,m
-		inx	h
-		mov	d,m
-		xchg
-		pchl
-
-;------------------------------------------------------------------------------
-MenuKbd:	lda	CtrlType
-		ora	a
-		jz	MenuOpt
-		inr	a
-		lxi	h,HILO(12,10)
-		lxi	d,1E78h
-MenuKbdJoy:	sta	CtrlType
-		push	d
-		lxi	d,HILO(14,20)
-		mov	a,h
-		call	Print85
-		inr	d
-		dcr	e
-		dcr	e
-		dcr	e
-		mov	a,l
-		call	Print85
-		pop	h
-		call	Beep
-		jmp	MenuOpt
+MenuOptB:	ld hl,MenuOptRut
+		add HL,bc
+		add HL,bc
+		ld e,(HL)
+		inc hl
+		ld d,(HL)
+		ex DE,HL
+		jp (HL)
 
 ;------------------------------------------------------------------------------
-MenuJoy:	lda	CtrlType
-		ora	a
-		jnz	MenuOpt
-		dcr	a
-		lxi	h,HILO(10,12)
-		lxi	d,2080h
-		jmp	MenuKbdJoy
+MenuKbd:	ld A,(CtrlType)
+		or a
+		jp Z,MenuOpt
+		inc a
+		ld hl, (12<<8)|10
+		ld de,1E78h
+MenuKbdJoy:	ld (CtrlType),A
+		push de
+		ld de, (14<<8)|20
+		ld a,h
+		call Print85
+		inc d
+		dec e
+		dec e
+		dec e
+		ld a,l
+		call Print85
+		pop hl
+		call Beep
+		jp MenuOpt
 
 ;------------------------------------------------------------------------------
-MenuInfo:	call	ShowInfo
-		jmp	Menu
+MenuJoy:	ld A,(CtrlType)
+		or a
+		jp NZ,MenuOpt
+		dec a
+		ld hl, (10<<8)|12
+		ld de,2080h
+		jp MenuKbdJoy
 
 ;------------------------------------------------------------------------------
-MenuDemo:	lxi	h,646Eh		; pipni podla HL
-		call	Beep
-		call	Demo
-		jmp	MenuW
+MenuInfo:	call ShowInfo
+		jp Menu
 
 ;------------------------------------------------------------------------------
-MenuGame:	lxi	h,54A0h
-		call	Beep		; pipni podla HL
-		call	StartGame	; spusti samotnu hru
-		lxi	h,0C801h
-		call	Beep		; pipni podla HL
-		lda	Aborted		; bola hra prerusena?
-		ana	a
-		jnz	MenuD		; ano, navrat do menu ihned
-		mvi	a,6		; zdrzanie
-MenuI:		mvi	c,0
-MenuJ:		mvi	b,0
-MenuK:		dcr	b
-		jnz	MenuK
-		dcr	c
-		jnz	MenuJ
-		dcr	a
-		jnz	MenuI
-		jmp	MenuW
+MenuDemo:	ld hl,646Eh; pipni podla HL
+		call Beep
+		call Demo
+		jp MenuW
+
+;------------------------------------------------------------------------------
+MenuGame:	ld hl,54A0h
+		call Beep		; pipni podla HL
+		call StartGame	; spusti samotnu hru
+		ld hl,0C801h
+		call Beep		; pipni podla HL
+		ld A,(Aborted)		; bola hra prerusena?
+		and a
+		jp NZ,MenuD		; ano, navrat do menu ihned
+		ld a,6		; zdrzanie
+MenuI:		ld c,0
+MenuJ:		ld b,0
+MenuK:		dec b
+		jp NZ,MenuK
+		dec c
+		jp NZ,MenuJ
+		dec a
+		jp NZ,MenuI
+		jp MenuW
 
 ;------------------------------------------------------------------------------
 ; animovane vykrelsenie nadpisu zo spritov
 AnimateLabel:
-		lxi	d,LabelHE+4	; data nadpisu (zobrazuje sa zprava)
-		lxi	b,InnerScr+(11*SVO)+22 ; adresa VO
-		call	DrawLabelLine	; zobraz 1. rad
-		lxi	b,InnerScr+(14*SVO)+23 ; adresa VO
-		call	DrawLabelLine	; zobraz 2. rad
-		lxi	b,InnerScr+(17*SVO)+24 ; adresa VO
-		call	DrawLabelLine	; zobraz 3. rad
-		lxi	b,InnerScr+(20*SVO)+25 ; adresa VO
-		call	DrawLabelLine	; zobraz 4. rad
-		lxi	b,InnerScr+(23*SVO)+26 ; adresa VO
-		call	DrawLabelLine	; zobraz 5. rad
-		lxi	b,InnerScr+(29*SVO)+27 ; adresa VO
-		call	DrawLabelLine	; zobraz 6. rad
-		lxi	b,InnerScr+(32*SVO)+28 ; adresa VO
-		call	DrawLabelLine	; zobraz 7. rad
-		lxi	b,InnerScr+(35*SVO)+29 ; adresa VO
-		call	DrawLabelLine	; zobraz 8. rad
-		lxi	b,InnerScr+(38*SVO)+30 ; adresa VO
-		call	DrawLabelLine	; zobraz 9. rad
-		lxi	b,InnerScr+(41*SVO)+31 ; adresa VO
+		ld de,LabelHE+4	; data nadpisu (zobrazuje sa zprava)
+		ld bc,InnerScr+(11*SVO)+22 ; adresa VO
+		call DrawLabelLine	; zobraz 1. rad
+		ld bc,InnerScr+(14*SVO)+23 ; adresa VO
+		call DrawLabelLine	; zobraz 2. rad
+		ld bc,InnerScr+(17*SVO)+24 ; adresa VO
+		call DrawLabelLine	; zobraz 3. rad
+		ld bc,InnerScr+(20*SVO)+25 ; adresa VO
+		call DrawLabelLine	; zobraz 4. rad
+		ld bc,InnerScr+(23*SVO)+26 ; adresa VO
+		call DrawLabelLine	; zobraz 5. rad
+		ld bc,InnerScr+(29*SVO)+27 ; adresa VO
+		call DrawLabelLine	; zobraz 6. rad
+		ld bc,InnerScr+(32*SVO)+28 ; adresa VO
+		call DrawLabelLine	; zobraz 7. rad
+		ld bc,InnerScr+(35*SVO)+29 ; adresa VO
+		call DrawLabelLine	; zobraz 8. rad
+		ld bc,InnerScr+(38*SVO)+30 ; adresa VO
+		call DrawLabelLine	; zobraz 9. rad
+		ld bc,InnerScr+(41*SVO)+31 ; adresa VO
 					; zobraz 10. rad
 
 ;------------------------------------------------------------------------------
 ; I: DE=adresa dat nadpisu, BC=адрес назначения vo VO
 DrawLabelLine:
-		lxi	h,SprBlast6	; adresa spritu SprBlast6
-		call	DrawLblSprK	; zobraz riadok spritov
+		ld hl,SprBlast6	; adresa spritu SprBlast6
+		call DrawLblSprK	; zobraz riadok spritov
 		;lxi	h,SprBrickA3	; adresa spritu SprBrickA3
 		;call	DrawLblSprK	; zobraz riadok spritov
-		lxi	h,SprBrickX2	; adresa spritu SprBrickA2
-		call	DrawLblSprK	; zobraz riadok spritov
-		lxi	h,SprBrickM	; adresa spritu SprBrickM
-		call	DrawLblSpr	; zobraz riadok spritov
+		ld hl,SprBrickX2	; adresa spritu SprBrickA2
+		call DrawLblSprK	; zobraz riadok spritov
+		ld hl,SprBrickM	; adresa spritu SprBrickM
+		call DrawLblSpr	; zobraz riadok spritov
 
-		lxi	h,5		; posun sa na dalsi riadok
-		dad	d		; v datach nadpisu
-		xchg
+		ld hl,5		; posun sa na dalsi riadok
+		add HL,de		; v datach nadpisu
+		ex DE,HL
 		ret
 
 ;------------------------------------------------------------------------------
 ; I: HL=адрес спрайта, DE=адрес надписи, BC=адрес назначения vo VO
-DrawLblSprK:	
+DrawLblSprK:
 ;		in	SysPB		; test na Shift alebo Stop
 ;		cma
 ;		ani	60h
 ;		rnz			; ano, navrat
-DrawLblSpr:	shld	SpriteAdr+1	; uloz adresu dat spritu
-		push	d		; odpamataj adresu dat nadpisu
-		push	b		; адрес назначения
-		xchg
-		shld	LabelAdr+1	; uloz adresu dat nadpisu
-		lxi	d,HILO(35,1)	; ширина заголовка 35 пунктов, точечная маска
-DrawLblSprA:	push	d		; запомнить счетчик и тип процедуры
-		mov	a,m
-		ana	e		; точка должна отображаться?
-		jz	DrawLblSprD	; нет, переходим
-		push	b		; odpamataj cielovu adresu vo VO
-		mov	l,c		; адрес назначения в HL
-		mov	h,b
-		mov	a,d
-		ani	3		; теперь в A тип процедуры 0..3
-SpriteAdr:	lxi	d,0		; adresa spritu do DE
-		call	DrawSpriteM	; zobraz sprite
-		pop	b		; obnov cielovu adresu
-DrawLblSprD:	lxi	h,(3*SVO)	; posun cielovu adresu
-		dad	b		; на 3 микро-строки ниже
-		mov	c,l		; a uloz do BC
-		mov	b,h
-LabelAdr:	lxi	h,0		; adresa dat nadpisu
-		pop	d		; obnov pocitadlo bodov a masku
-		mov	a,d		; а также на 6 точек влево
+DrawLblSpr:	ld (SpriteAdr+1),HL; uloz adresu dat spritu
+		push de		; odpamataj adresu dat nadpisu
+		push bc		; адрес назначения
+		ex DE,HL
+		ld (LabelAdr+1),HL	; uloz adresu dat nadpisu
+		ld de, (35<<8)|1
+DrawLblSprA:	push de; запомнить счетчик и тип процедуры
+		ld a,(HL)
+		and e		; точка должна отображаться?
+		jp Z,DrawLblSprD	; нет, переходим
+		push bc		; odpamataj cielovu adresu vo VO
+		ld l,c		; адрес назначения в HL
+		ld h,b
+		ld a,d
+		and 3		; теперь в A тип процедуры 0..3
+SpriteAdr:	ld de,0; adresa spritu do DE
+		call DrawSpriteM	; zobraz sprite
+		pop bc		; obnov cielovu adresu
+DrawLblSprD:	ld hl,(3*SVO); posun cielovu adresu
+		add HL,bc		; на 3 микро-строки ниже
+		ld c,l		; a uloz do BC
+		ld b,h
+LabelAdr:	ld hl,0; adresa dat nadpisu
+		pop de		; obnov pocitadlo bodov a masku
+		ld a,d		; а также на 6 точек влево
 ;LabelShift:	adi	0		; дополнительный сдвиг на 0..3
-		ani	3
-		jz	DrawLblSprDA
-		dcx	b
-DrawLblSprDA:	mov	a,e
-		rlc
-		jnc	DrawLblSprE
-		dcx	h
-		shld	LabelAdr+1
-DrawLblSprE:	mov	e,a		; uloz novu masku
-		dcr	d		; opakuj pre celu sirku nadpisu
-		jnz	DrawLblSprA
+		and 3
+		jp Z,DrawLblSprDA
+		dec bc
+DrawLblSprDA:	ld a,e
+		rlca
+		jp NC,DrawLblSprE
+		dec hl
+		ld (LabelAdr+1),HL
+DrawLblSprE:	ld e,a; uloz novu masku
+		dec d		; opakuj pre celu sirku nadpisu
+		jp NZ,DrawLblSprA
 
 ;		lxi	h,InnerScr+(92*SVO) ; oprav cast okraja mriezky, ktory
 ;		lxi	d,SVO		; sa prepisal prekreslenim spritov
@@ -248,65 +248,65 @@ DrawLblSprE:	mov	e,a		; uloz novu masku
 ;		dcr	b
 ;		jnz	AnimateLabelB
 
- 		mvi	l,VVO-3		; vykresli vnutornu obrazovku
-		lxi	d,InnerScr+(3*SVO)
-		lxi	b,BaseVramAdr+(256-18)
-		call	DrawInnerScr
+ 		ld l,VVO-3		; vykresli vnutornu obrazovku
+		ld de,InnerScr+(3*SVO)
+		ld bc,BaseVramAdr+(256-18)
+		call DrawInnerScr
 
-		pop	b		; obnov cielovu adresu
-		pop	d		; obnov adresu dat nadpisu
+		pop bc		; obnov cielovu adresu
+		pop de		; obnov adresu dat nadpisu
 		ret
 
 ;------------------------------------------------------------------------------
-ShowInfo:	lxi	h,4533h
-		call	Beep
+ShowInfo:	ld hl,4533h
+		call Beep
 
-		call	DrawGridM	; vykresli mriezku do vnutornej obr.
+		call DrawGridM	; vykresli mriezku do vnutornej obr.
 
-		lxi	h,InnerScr+(45*SVO)+5 ; adresa do vnutornej obrazovky
-M256S6:		lxi	d,SprAutoVorton	; adresa spritu Auto-Vortona
-M256R2C:	call	DrawSprite0	; vykresli sprite
-		lxi	h,InnerScr+(49*SVO)+4 ; adresa do vnutornej obrazovky
-M256S7:		lxi	d,SprAutoVorton	; adresa spritu Auto-Vortona
-M256R4C:	call	DrawSprite0	; vykresli sprite
-		lxi	h,InnerScr+(53*SVO)+3 ; adresa do vnutornej obrazovky
-M256S8:		lxi	d,SprAutoVorton	; adresa spritu Auto-Vortona
-M256R0C:	call	DrawSprite0	; vykresli sprite
-		lxi	h,InnerScr+(57*SVO)+2 ; adresa do vnutornej obrazovky
-M256S9:		lxi	d,SprAutoVorton	; adresa spritu Auto-Vortona
-M256R2D:	call	DrawSprite0	; vykresli sprite
-		lxi	h,InnerScr+(63*SVO)+8 ; adresa do vnutornej obrazovky
-M256S12:	lxi	d,SprLasertron1	; adresa spritu Lasertronu
-M256R0D:	call	DrawSprite2	; vykresli sprite
-		lxi	h,InnerScr+(76*SVO)+1 ; adresa do vnutornej obrazovky
-M256S13:	lxi	d,SprVortonSW	; adresa spritu Main-Vortona
-M256R0E:	call	DrawSprite6	; vykresli sprite
+		ld hl,InnerScr+(45*SVO)+5 ; adresa do vnutornej obrazovky
+M256S6:		ld de,SprAutoVorton; adresa spritu Auto-Vortona
+M256R2C:	call DrawSprite0; vykresli sprite
+		ld hl,InnerScr+(49*SVO)+4 ; adresa do vnutornej obrazovky
+M256S7:		ld de,SprAutoVorton; adresa spritu Auto-Vortona
+M256R4C:	call DrawSprite0; vykresli sprite
+		ld hl,InnerScr+(53*SVO)+3 ; adresa do vnutornej obrazovky
+M256S8:		ld de,SprAutoVorton; adresa spritu Auto-Vortona
+M256R0C:	call DrawSprite0; vykresli sprite
+		ld hl,InnerScr+(57*SVO)+2 ; adresa do vnutornej obrazovky
+M256S9:		ld de,SprAutoVorton; adresa spritu Auto-Vortona
+M256R2D:	call DrawSprite0; vykresli sprite
+		ld hl,InnerScr+(63*SVO)+8 ; adresa do vnutornej obrazovky
+M256S12:	ld de,SprLasertron1; adresa spritu Lasertronu
+M256R0D:	call DrawSprite2; vykresli sprite
+		ld hl,InnerScr+(76*SVO)+1 ; adresa do vnutornej obrazovky
+M256S13:	ld de,SprVortonSW; adresa spritu Main-Vortona
+M256R0E:	call DrawSprite6; vykresli sprite
 
-		call	Cls
- 		mvi	l,GridHeightM
-		lxi	d,InnerScr+(11*SVO)
-		lxi	b,BaseVramAdr+(256-26)
-		call	DrawInnerScr
-		call	PrintSmallInfo
-		lxi	h,TInfo
-		call	Print85Text
+		call Cls
+ 		ld l,GridHeightM
+		ld de,InnerScr+(11*SVO)
+		ld bc,BaseVramAdr+(256-26)
+		call DrawInnerScr
+		call PrintSmallInfo
+		ld hl,TInfo
+		call Print85Text
 
-		call	WaitNoKey
-		jmp	WaitAnyKey2
+		call WaitNoKey
+		jp WaitAnyKey2
 
 ;------------------------------------------------------------------------------
 ; Подготовить сетку на внутреннем экране для Menu и Info.
 ; Общая высота сетки составляет 147 точек.
-DrawGridM:	lxi	h,InnerScr	; vymaz hornu cast VO
-		lxi	b,11*SVO
-		call	Fill16Z
+DrawGridM:	ld hl,InnerScr; vymaz hornu cast VO
+		ld bc,11*SVO
+		call Fill16Z
 		; vykresli samotnu mriezku
-		lxi	d,GridAdrM	; адрес назначения
-		mvi	c,GridHeightM-9	; vyska mriezky -9
-		call	DrawGrid
-		lxi	d,GridAdrM+((GridHeightM-1)*SVO)
-		mvi	c,GridHeightM-2	; vyska mriezky -2
-		jmp	DrawBord
+		ld de,GridAdrM	; адрес назначения
+		ld c,GridHeightM-9	; vyska mriezky -9
+		call DrawGrid
+		ld de,GridAdrM+((GridHeightM-1)*SVO)
+		ld c,GridHeightM-2	; vyska mriezky -2
+		jp DrawBord
 
 ;------------------------------------------------------------------------------
 ; data nadpisu HIGHWAY ENCOUNTER

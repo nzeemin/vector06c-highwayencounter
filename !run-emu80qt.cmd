@@ -1,0 +1,1 @@
+start C:\bin\emu80qt\emu80qt.exe hwyenc.rom

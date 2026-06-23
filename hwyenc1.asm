@@ -20,13 +20,6 @@
 ; nzeemin 2022 порт на Вектор-06Ц
 ;------------------------------------------------------------------------------
 
-;------------------------------------------------------------------------------
-
-; Макрос для создания слова из старшего/младшего байт
-#define		HILO(hi,lo) ((256*(hi))+(lo))
-
-;------------------------------------------------------------------------------
-
 UsePackedGrp	.equ	0
 Release		.equ	1
 DebugDemoLvl	.equ	-1	; -1 - Demo od zaciatku
@@ -50,34 +43,34 @@ Stack		.equ	100h ;MarkBuffBeg	; zasobnik pred vnutorne obrazovky
 ;------------------------------------------------------------------------------
 
 ; Import declarations from hwyenc0.asm
-#include "hwyenc0.exp"
+	include "hwyenc0.exp"
 
 ;------------------------------------------------------------------------------
 
 		.org Start
 ;Start:
 		di
-		lxi	sp,Stack
+		ld sp,Stack
 ; Clear the plane 3 ($8000-$BFFF) from any dirt
 		;call ClearPlane3
 		ei
 ; Waiting on the title screen
-		call	WaitAnyKey2
+		call WaitAnyKey2
 		di
-		call	ClearPlane012
-		call	SetPaletteGame
+		call ClearPlane012
+		call SetPaletteGame
 
 ;		call	Menu
 ;		call	ShowInfo
 
-		call	DrawGridM
-		call	Cls		; zmaz obrazovku
-		mvi	l,155		; a vykresli vnutornu obrazovku
-		lxi	d,InnerScr+(3*SVO)
-		lxi	b,BaseVramAdr+(256-18)
-		call	DrawInnerScr
+		call DrawGridM
+		call Cls		; zmaz obrazovku
+		ld l,155		; a vykresli vnutornu obrazovku
+		ld de,InnerScr+(3*SVO)
+		ld bc,BaseVramAdr+(256-18)
+		call DrawInnerScr
 
-		call	AnimateLabel	; zobraz animovany nadpis
+		call AnimateLabel	; zobraz animovany nadpis
 
 ;		lxi	d,LabelHE+4	; data nadpisu (zobrazuje sa zprava)
 ;		lxi	b,InnerScr+(11*SVO)+29 ; adresa VO
@@ -141,41 +134,41 @@ Stack		.equ	100h ;MarkBuffBeg	; zasobnik pred vnutorne obrazovky
 
 
 Infty:		;jmp Infty
-		jmp Start
+		jp Start
 
 ;------------------------------------------------------------------------------
 
 ; Returns: A=key code, $00 no key; Z=0 for key, Z=1 for no key
 ; Key codes: PxxFLRUD Pause=$80, Fire=$10, Left=$08, Right=$04, Up=$02, Down=$01
 ReadKeyboard:
-		xra	a
-		sta	ReadKeyboard_3+1
-		lxi	h,ReadKeyboard_map  ; Point HL at the keyboard list
-		mvi	b,4		; number of rows to check
-ReadKeyboard_0:        
-		mov	e,m		; get address low
-		inx	h
-		mov	d,m		; get address high
-		inx	h
-		ldax	d		; get bits for keys
-		mvi	c,8		; number of keys in a row
+		xor a
+		ld (ReadKeyboard_3+1),A
+		ld hl,ReadKeyboard_map  ; Point HL at the keyboard list
+		ld b,4		; number of rows to check
+ReadKeyboard_0:
+		ld e,(HL)		; get address low
+		inc hl
+		ld d,(HL)		; get address high
+		inc hl
+		ld A,(de)		; get bits for keys
+		ld c,8		; number of keys in a row
 ReadKeyboard_1:
-		ral			; shift A left; bit 0 sets carry bit
-		jc	ReadKeyboard_2	; if the bit is 1, the key's not pressed
-		mov	e,a		; save A
-		lda	ReadKeyboard_3+1
-		ora	m		; set bit for the key pressed
-		sta	ReadKeyboard_3+1
-		mov	a,e		; restore A
+		rla			; shift A left; bit 0 sets carry bit
+		jp C,ReadKeyboard_2	; if the bit is 1, the key's not pressed
+		ld e,a		; save A
+		ld A,(ReadKeyboard_3+1)
+		or (HL)		; set bit for the key pressed
+		ld (ReadKeyboard_3+1),A
+		ld a,e		; restore A
 ReadKeyboard_2:
-		inx	h		; next table address
-		dcr	c
-		jnz	ReadKeyboard_1	; continue the loop by bits
-		dcr	b
-		jnz	ReadKeyboard_0	; continue the loop by lines
+		inc hl		; next table address
+		dec c
+		jp NZ,ReadKeyboard_1	; continue the loop by bits
+		dec b
+		jp NZ,ReadKeyboard_0	; continue the loop by lines
 ReadKeyboard_3:
-		mvi	a,0		; set the result; mutable parameter!
-		ora	a		; set/reset Z flag
+		ld a,0		; set the result; mutable parameter!
+		or a		; set/reset Z flag
 		ret
 ; Mapping: Left = Lt [,  Right = Rt ],  Up = Up SS,  Down = Dn R/L
 ;          Fire = US Tab Spc PS ZB,  Pause = VK
@@ -191,41 +184,37 @@ ReadKeyboard_map:					 ; 7   6   5   4   3   2   1   0
 ;------------------------------------------------------------------------------
 
 WaitAnyKey2:
-		call	ReadKeyboard
-		ora	a
-		jz	WaitAnyKey2	; Wait for press
+		call ReadKeyboard
+		or a
+		jp Z,WaitAnyKey2	; Wait for press
 WaitNoKey:
-		call	ReadKeyboard
-		ora	a
-		jnz	WaitNoKey	; Wait for unpress
+		call ReadKeyboard
+		or a
+		jp NZ,WaitNoKey	; Wait for unpress
 		ret
 
 ;------------------------------------------------------------------------------
 
-#include "hwyencmenu.asm"
-#include "hwyencprint.asm"
-#include "hwyencsound.asm"
-#include "hwyencsprite.asm"
-#include "hwyenczone.asm"
-#include "hwyencgame.asm"
-#include "hwyencutil.asm"
+	include "hwyencmenu.asm"
+	include "hwyencprint.asm"
+	include "hwyencsound.asm"
+	include "hwyencsprite.asm"
+	include "hwyenczone.asm"
+	include "hwyencgame.asm"
+	include "hwyencutil.asm"
 
-TestKbdJoy:	call	ReadKeyboard
-		sta	KbdState
+TestKbdJoy:	call ReadKeyboard
+		ld (KbdState),A
 		ret
 
 WaitAnyKeyT10:	ret
 
-#include "hwyencdata.asm"
+	include "hwyencdata.asm"
 
 ;------------------------------------------------------------------------------
 
-.echo "End of code is "
-.echo $
-.echo ", start of screen structs is "
-.echo MarkBuffBeg
-.echo "\n"
-
+	display "End of code is: ",/A, $
+	display "Start of screen structs is: ",/A, MarkBuffBeg
 
 ;------------------------------------------------------------------------------
 	.end

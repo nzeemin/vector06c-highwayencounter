@@ -1,11 +1,11 @@
-# uknc-highwayencounter
+# vector06c-highwayencounter
 Porting Highway Encounter game from PMD 85 to Vector 06c.
 
 
 Porting status: Work In Progress.
 
 
-## Tools for the tools folder
+## Tools used
 
  - `tasm.exe` compatible with Windows 10 + `TASM85.TAB`
    http://old-dos.ru/dl.php?id=1926

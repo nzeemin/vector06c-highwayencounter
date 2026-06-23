@@ -25,32 +25,32 @@
 ; I: DE=adresa vnutornej obrazovky, C=vyska-9
 ; O: HL=adresa vnutornej obrazovky, BC=0
 ; M: все
-DrawGrid:	push	d		; odpamataj adresu VO
-		push	d
-		lxi	h,Grid		; adresa vzorky mriezky
-		mvi	b,8		; prvych 8 mikroriadkov
-DrawGridA:	push	b		; uloz pocitadlo
-		push	d		; zaciatok riadku na zasobnik
-		mvi	b,8		; skopiruj prvych 8 bytov mriezky
-		call	Copy8		; do vnutornej obrazovky
-		xthl			; adresa zaciatku riadku do HL
-		mvi	c,3		; 4 kopie za sebou
-DrawGridB:	mvi	b,8
-		push	h
-		call	Copy8
-		pop	h
-		dcr	c
-		jnz	DrawGridB	; продолжаем заполнять микро-строку
-		pop	h
-		pop	b
-		dcr	b
-		jnz	DrawGridA	; продолжаем цикл по строкам
-		pop	h		; rozkopiruj 8 mikroriadkov
-DrawGridC:	mvi	b,SVO		; pre vytvorenie celej mriezky
-		call	Copy8
-		dcr	c
-		jnz	DrawGridC
-		pop	h
+DrawGrid:	push de; odpamataj adresu VO
+		push de
+		ld hl,Grid		; adresa vzorky mriezky
+		ld b,8		; prvych 8 mikroriadkov
+DrawGridA:	push bc; uloz pocitadlo
+		push de		; zaciatok riadku na zasobnik
+		ld b,8		; skopiruj prvych 8 bytov mriezky
+		call Copy8		; do vnutornej obrazovky
+		ex (SP),HL			; adresa zaciatku riadku do HL
+		ld c,3		; 4 kopie za sebou
+DrawGridB:	ld b,8
+		push hl
+		call Copy8
+		pop hl
+		dec c
+		jp NZ,DrawGridB	; продолжаем заполнять микро-строку
+		pop hl
+		pop bc
+		dec b
+		jp NZ,DrawGridA	; продолжаем цикл по строкам
+		pop hl		; rozkopiruj 8 mikroriadkov
+DrawGridC:	ld b,SVO; pre vytvorenie celej mriezky
+		call Copy8
+		dec c
+		jp NZ,DrawGridC
+		pop hl
 		ret
 
 ;------------------------------------------------------------------------------
@@ -58,28 +58,28 @@ DrawGridC:	mvi	b,SVO		; pre vytvorenie celej mriezky
 ; I: HL=adresa VO, DE=adresa VO na spodku mriezky, C=vyska-2
 ; O: -
 ; M: все
-DrawBord:	mvi	b,SVO-1		; ширина сетки без правой стороны
-		mvi	a,0FFh
-DrawBordO:	mov	m,a		; верхняя граница
-		inx	h
-		stax	d		; нижняя граница
-		inx	d
-		dcr	b
-		jnz	DrawBordO
-		mvi	a,0FFh		; prava strana extra
-		mov	m,a
-		stax	d
-		lxi	d,SVO-1
-DrawBordL:	inx	h
-		mov	a,m		; lave oramovanie
-		ori	80h
-		mov	m,a
-		dad	d
-		mov	a,m		; prave oramovanie
-		ori	01h
-		mov	m,a
-		dcr	c
-		jnz	DrawBordL
+DrawBord:	ld b,SVO-1; ширина сетки без правой стороны
+		ld a,0FFh
+DrawBordO:	ld (HL),a; верхняя граница
+		inc hl
+		ld (de),A		; нижняя граница
+		inc de
+		dec b
+		jp NZ,DrawBordO
+		ld a,0FFh		; prava strana extra
+		ld (HL),a
+		ld (de),A
+		ld de,SVO-1
+DrawBordL:	inc hl
+		ld a,(HL)		; lave oramovanie
+		or 80h
+		ld (HL),a
+		add HL,de
+		ld a,(HL)		; prave oramovanie
+		or 01h
+		ld (HL),a
+		dec c
+		jp NZ,DrawBordL
 		ret
 
 ;------------------------------------------------------------------------------
@@ -99,14 +99,16 @@ DrawInnerScr:
 ;    BC=адрес назначения VRAM
 ; O: -
 ; M: все
-CpyInnerScr:	
-		xchg			; E=высота, HL=адрес источника
+CpyInnerScr:
+		ex DE,HL			; E=высота, HL=адрес источника
 CpyInnerScrL:
 ;
-#define		CpyInnerScrMacro	mov	a,m
-#defcont			\	stax	b
-#defcont			\	inx	h
-#defcont			\	inr	b
+	MACRO CpyInnerScrMacro
+		ld a,(HL)
+		ld (bc),A
+		inc hl
+		inc b
+	ENDM
 ;
 		CpyInnerScrMacro	; 0
 		CpyInnerScrMacro	; 1
@@ -140,16 +142,16 @@ CpyInnerScrL:
 		CpyInnerScrMacro	; 29
 		CpyInnerScrMacro	; 30
 	; 31, последний столбец
-	 	mov	a,m
-	 	stax	b
-	 	inx	h
+	 	ld a,(HL)
+	 	ld (bc),A
+	 	inc hl
 	;
-		mov	a,b
-		ani	BaseVramAdr/256 ;0E0h
-		mov	b,a		; к началу строки
-		dcr	c		; перейти к следующей микро-строке
-		dcr	e		; уменьшаем счётчик
-		jnz	CpyInnerScrL
+		ld a,b
+		and BaseVramAdr/256 ;0E0h
+		ld b,a		; к началу строки
+		dec c		; перейти к следующей микро-строке
+		dec e		; уменьшаем счётчик
+		jp NZ,CpyInnerScrL
 		ret
 
 ;------------------------------------------------------------------------------
@@ -159,142 +161,142 @@ CpyInnerScrL:
 ;    BC=адрес назначения VO
 ; O: -
 ; M: все
-CopyInnerBuf:	
-		mov	h,b
-		mov	b,l		; счётчик микро-строк
-		mov	l,c
+CopyInnerBuf:
+		ld h,b
+		ld b,l		; счётчик микро-строк
+		ld l,c
 CopyInnerBufA:
-		ldax	d		; 0
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 1
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 2
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 3
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 4
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 5
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 6
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 7
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 8
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 9
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 10
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 11
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 12
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 13
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 14
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 15
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 16
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 17
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 18
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 19
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 20
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 21
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 22
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 23
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 24
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 25
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 26
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 17
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 28
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 29
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 30
-		mov	m,a
-		inx	d
-		inx	h
-		ldax	d		; 31
-		mov	m,a
-		inx	d
-		inx	h
+		ld A,(de)		; 0
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 1
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 2
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 3
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 4
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 5
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 6
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 7
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 8
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 9
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 10
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 11
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 12
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 13
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 14
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 15
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 16
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 17
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 18
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 19
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 20
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 21
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 22
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 23
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 24
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 25
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 26
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 17
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 28
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 29
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 30
+		ld (HL),a
+		inc de
+		inc hl
+		ld A,(de)		; 31
+		ld (HL),a
+		inc de
+		inc hl
 ;
-		dcr	b
-		jnz	CopyInnerBufA
+		dec b
+		jp NZ,CopyInnerBufA
 		ret
 
 ;------------------------------------------------------------------------------
@@ -303,51 +305,51 @@ CopyInnerBufA:
 ; O: -
 ; M: все
 Cls:
-		lxi	h,00000h
-		jp	ClearPlane
+		ld hl,00000h
+		jp P,ClearPlane
 ClearPlane012:
-		lxi	h,00000h
-		call	ClearPlane
-		lxi	h,0E000h
-		call	ClearPlane
-		lxi	h,0C000h
-		jp	ClearPlane
+		ld hl,00000h
+		call ClearPlane
+		ld hl,0E000h
+		call ClearPlane
+		ld hl,0C000h
+		jp P,ClearPlane
 ; Clear plane selected by A = plane address hi byte
 ClearPlaneA:
-		adi	020h
-		mov	h,a
-		mvi	l,0
+		add A,020h
+		ld h,a
+		ld l,0
 ClearPlane:
-		xchg			; now DE = screen address
-		lxi	h,0		; odpamataj SP
-		dad	sp
-		shld	ClsSP+1
-		xchg			; HL = screen address
-		lxi	b,0
-		mov	d,b
-		mov	e,b
-		sphl
+		ex DE,HL			; now DE = screen address
+		ld hl,0		; odpamataj SP
+		add HL,sp
+		ld (ClsSP+1),HL
+		ex DE,HL			; HL = screen address
+		ld bc,0
+		ld d,b
+		ld e,b
+		ld SP,HL
 ClsL:
-		push	d		; 1
-		push	d
-		push	d
-		push	d		; 4
-		push	d
-		push	d
-		push	d
-		push	d		; 8
-		push	d		; 9
-		push	d
-		push	d
-		push	d		; 12
-		push	d
-		push	d
-		push	d
-		push	d		; 16
+		push de		; 1
+		push de
+		push de
+		push de		; 4
+		push de
+		push de
+		push de
+		push de		; 8
+		push de		; 9
+		push de
+		push de
+		push de		; 12
+		push de
+		push de
+		push de
+		push de		; 16
 ;
-		dcr	b
-		jnz	ClsL
-ClsSP:		lxi	sp,0
+		dec b
+		jp NZ,ClsL
+ClsSP:		ld sp,0
 		ret
 
 ;------------------------------------------------------------------------------
@@ -355,12 +357,12 @@ ClsSP:		lxi	sp,0
 ; I: HL=zdroj, DE=ciel, B=velkost bloku
 ; O: B=0
 ; M: AF, B, DE, HL
-Copy8:		mov	a,m
-		stax	d
-		inx	h
-		inx	d
-		dcr	b
-		jnz	Copy8
+Copy8:		ld a,(HL)
+		ld (de),A
+		inc hl
+		inc de
+		dec b
+		jp NZ,Copy8
 		ret
 
 ;------------------------------------------------------------------------------
@@ -368,14 +370,14 @@ Copy8:		mov	a,m
 ; I: HL=zdroj, DE=ciel, BC=velkost bloku
 ; O: -
 ; M: все
-Copy16:		mov	a,m
-		stax	d
-		inx	h
-		inx	d
-		dcx	b
-		mov	a,b
-		ora	c
-		jnz	Copy16
+Copy16:		ld a,(HL)
+		ld (de),A
+		inc hl
+		inc de
+		dec bc
+		ld a,b
+		or c
+		jp NZ,Copy16
 		ret
 
 ;------------------------------------------------------------------------------
@@ -383,13 +385,13 @@ Copy16:		mov	a,m
 ; I: HL=ciel, E=byte, BC=velkost bloku
 ; O: -
 ; M: HL, E, BC, AF
-Fill16Z:	mvi	e,0
-Fill16:		mov	m,e
-		inx	h
-		dcx	b
-		mov	a,b
-		ora	c
-		jnz	Fill16
+Fill16Z:	ld e,0
+Fill16:		ld (HL),e
+		inc hl
+		dec bc
+		ld a,b
+		or c
+		jp NZ,Fill16
 		ret
 
 ;------------------------------------------------------------------------------
@@ -397,12 +399,12 @@ Fill16:		mov	m,e
 ; I: HL, BC=hodnoty
 ; O: BC=vysledok
 ; M: BC, AF
-SubBCHL:	mov	a,c
-		sub	l
-		mov	c,a
-		mov	a,b
-		sbb	h
-		mov	b,a
+SubBCHL:	ld a,c
+		sub l
+		ld c,a
+		ld a,b
+		sbc A,h
+		ld b,a
 		ret
 
 ;------------------------------------------------------------------------------
@@ -410,12 +412,12 @@ SubBCHL:	mov	a,c
 ; I: HL, DE=hodnoty
 ; O: HL=vysledok
 ; M: HL, AF
-SubHLDE:	mov	a,l
-		sub	e
-		mov	l,a
-		mov	a,h
-		sbb	d
-		mov	h,a
+SubHLDE:	ld a,l
+		sub e
+		ld l,a
+		ld a,h
+		sbc A,d
+		ld h,a
 		ret
 
 ;------------------------------------------------------------------------------
@@ -423,12 +425,12 @@ SubHLDE:	mov	a,l
 ; I: DE, BC=hodnoty
 ; O: DE=vysledok
 ; M: HL, AF
-SubDEBC:	mov	a,e
-		sub	c
-		mov	e,a
-		mov	a,d
-		sbb	b
-		mov	d,a
+SubDEBC:	ld a,e
+		sub c
+		ld e,a
+		ld a,d
+		sbc A,b
+		ld d,a
 		ret
 
 ;------------------------------------------------------------------------------
@@ -436,12 +438,12 @@ SubDEBC:	mov	a,e
 ; I: H=delenec, D=delitel
 ; O: L=podiel, A=zbytok, H=B=0
 ; M: AF, B, HL
-	#if	0
-Div8x8:		xra	a		; vynuluj zbytok po deleni
-		mov	l,a		; vynuluj podiel
-		mvi	b,8		; 8 radov
-		jmp	Div16x8L
-	#endif
+	if	0
+Div8x8:		xor a; vynuluj zbytok po deleni
+		ld l,a		; vynuluj podiel
+		ld b,8		; 8 radov
+		jp Div16x8L
+	endif
 
 ;------------------------------------------------------------------------------
 ; Целочисленное деление 16bit/8bit.
@@ -449,16 +451,16 @@ Div8x8:		xra	a		; vynuluj zbytok po deleni
 ; I: HL=delenec, D=delitel
 ; O: HL=podiel, A=zbytok, B=0
 ; M: AF, B, HL
-Div16x8:	xra	a		; vynuluj zbytok po deleni
-		mvi	b,16		; 16 radov
-Div16x8L:	dad	h		; zdvojnasob delenec i podiel, najvyssi bit do CY
-		ral			; zdvojnasob zbytok po deleni a pripocitaj CY
-		cmp	d		; obsahuje tento rad?
-		jc	Div16x8N	; nie, skoc dalej
-		sub	d		; ano, odpocitaj rad
-		inr	l		; a zvys podiel
-Div16x8N:	dcr	b		; opakuj pre vsetky rady
-		jnz	Div16x8L
+Div16x8:	xor a; vynuluj zbytok po deleni
+		ld b,16		; 16 radov
+Div16x8L:	add HL,hl; zdvojnasob delenec i podiel, najvyssi bit do CY
+		rla			; zdvojnasob zbytok po deleni a pripocitaj CY
+		cp d		; obsahuje tento rad?
+		jp C,Div16x8N	; nie, skoc dalej
+		sub d		; ano, odpocitaj rad
+		inc l		; a zvys podiel
+Div16x8N:	dec b; opakuj pre vsetky rady
+		jp NZ,Div16x8L
 		ret
 
 ;------------------------------------------------------------------------------
@@ -466,13 +468,13 @@ Div16x8N:	dcr	b		; opakuj pre vsetky rady
 ; I: -
 ; O: A=RND
 ; M: HL, AF
-Rand:		lxi	h,RndVal
-		mov	a,m
-		add	a
-		add	a
-		add	m
-		adi	7
-		mov	m,a
+Rand:		ld hl,RndVal
+		ld a,(HL)
+		add A,a
+		add A,a
+		add A,(HL)
+		add A,7
+		ld (HL),a
 		ret
 
 ;-----------------------------------------------------------------------------

@@ -25,17 +25,17 @@
 ; I: HL=адрес текста
 ; O: -
 ; M: все
-Print85Text:	mov	e,m		; столбец
-		inx	h
-		mov	d,m		; ряд
-		inx	h
-Print85TextN:	mov	a,m		; символ
-		inx	h
-		cpi	0FEh		; koniec vsetkych textov?
-		rz			; ano, navrat
-		jnc	Print85Text	; skoc, koniec jedneho textu
-		call	Print85		; zobraz jeden znak
-		jmp	Print85TextN
+Print85Text:	ld e,(HL); столбец
+		inc hl
+		ld d,(HL)		; ряд
+		inc hl
+Print85TextN:	ld a,(HL); символ
+		inc hl
+		cp 0FEh		; koniec vsetkych textov?
+		ret Z			; ano, navrat
+		jp NC,Print85Text	; skoc, koniec jedneho textu
+		call Print85		; zobraz jeden znak
+		jp Print85TextN
 
 ;------------------------------------------------------------------------------
 ; Подпрограмма для рисования символа шириной 8 пунктов и высотой 5 пунктов,
@@ -45,50 +45,50 @@ Print85TextN:	mov	a,m		; символ
 ; I: D=riadok, E=stlpec, A=znak
 ; O: E=E+1
 ; M: AF, BC, E
-Print85:	push	h		; odpamataj adresu textu
-		push	d		; odpamataj suradnice
-		sui	030h
-		mov	l,a		; kod znaku do HL
-		mvi	h,0
-		mov	c,l		; x1 tiez do BC
-		mov	b,h
-		dad	h		; x2
-		dad	h		; x4
-		dad	b		; x5
-		lxi	b,Font85	; pripocitaj adresu fontu
-		dad	b
-		xchg			; DE=predloha znaku, HL=suradnice
-		call	Print8PosAdr	; vypocitaj adresu VRAM
-		mvi	m,0
-		dcr	l
-		mvi	m,07Fh
-		dcr	l
-		ldax	d		; 1
-		mov	m,a
-		inx	d
-		dcr	l
-		ldax	d		; 2
-		mov	m,a
-		inx	d
-		dcr	l
-		ldax	d		; 3
-		mov	m,a
-		inx	d
-		dcr	l
-		ldax	d		; 4
-		mov	m,a
-		inx	d
-		dcr	l
-		ldax	d		; 5
-		mov	m,a
-		inx	d
-		dcr	l
-		mvi	m,07Fh
-		dcr	l
-		mvi	m,0
-		pop	d
-		pop	h
-		inr	e		; следующая позиция
+Print85:	push hl; odpamataj adresu textu
+		push de		; odpamataj suradnice
+		sub 030h
+		ld l,a		; kod znaku do HL
+		ld h,0
+		ld c,l		; x1 tiez do BC
+		ld b,h
+		add HL,hl		; x2
+		add HL,hl		; x4
+		add HL,bc		; x5
+		ld bc,Font85	; pripocitaj adresu fontu
+		add HL,bc
+		ex DE,HL			; DE=predloha znaku, HL=suradnice
+		call Print8PosAdr	; vypocitaj adresu VRAM
+		ld (HL),0
+		dec l
+		ld (HL),07Fh
+		dec l
+		ld A,(de)		; 1
+		ld (HL),a
+		inc de
+		dec l
+		ld A,(de)		; 2
+		ld (HL),a
+		inc de
+		dec l
+		ld A,(de)		; 3
+		ld (HL),a
+		inc de
+		dec l
+		ld A,(de)		; 4
+		ld (HL),a
+		inc de
+		dec l
+		ld A,(de)		; 5
+		ld (HL),a
+		inc de
+		dec l
+		ld (HL),07Fh
+		dec l
+		ld (HL),0
+		pop de
+		pop hl
+		inc e		; следующая позиция
 		ret
 
 ;------------------------------------------------------------------------------
@@ -99,33 +99,33 @@ Print85:	push	h		; odpamataj adresu textu
 ; I: D=riadok, E=stlpec, A=znak
 ; O: E=E+1
 ; M: AF, BC, E
-Print88:	push	h		; odpamataj adresu textu
-		push	d		; odpamataj suradnice
-		add	a		; kod znaku 2x
-		add	a		; 4x
-		add	a		; 8x
-		mov	l,a		; do HL
-		mvi	h,0
-		lxi	b,Font88	; pripocitaj adresu fontu
-		dad	b
-		xchg			; DE=predloha znaku, HL=suradnice
-		call	Print8PosAdr	; vypocitaj adresu VRAM
-		lxi	b,HILO(8,3Fh)	; B=vyska znaku, C=offset na dalsi uR
-		call	Print8S0
-		pop	d
-		pop	h
-		inr	e
+Print88:	push hl; odpamataj adresu textu
+		push de		; odpamataj suradnice
+		add A,a		; kod znaku 2x
+		add A,a		; 4x
+		add A,a		; 8x
+		ld l,a		; do HL
+		ld h,0
+		ld bc,Font88	; pripocitaj adresu fontu
+		add HL,bc
+		ex DE,HL			; DE=predloha znaku, HL=suradnice
+		call Print8PosAdr	; vypocitaj adresu VRAM
+		ld bc, (8<<8)|3Fh
+		call Print8S0
+		pop de
+		pop hl
+		inc e
 		ret
 
 ;------------------------------------------------------------------------------
 ; I: DE=adresa predlohy znaku, HL=адрес VRAM, B=высота символа, C=3Fh
-Print8S0:	ldax	d		; zobraz znak
-		mov	m,a
-		inx	d
-Print8SX0:	mvi	a,3Fh
-		dcr	l		; следующая строка
-		dcr	b
-		jnz	Print8S0
+Print8S0:	ld A,(de); zobraz znak
+		ld (HL),a
+		inc de
+Print8SX0:	ld a,3Fh
+		dec l		; следующая строка
+		dec b
+		jp NZ,Print8S0
 		ret
 
 ;------------------------------------------------------------------------------
@@ -134,16 +134,16 @@ Print8SX0:	mvi	a,3Fh
 ; O: HL=адрес VRAM
 ; M: HL, BC, AF
 Print8PosAdr:
-		mov	c,l		; столбец
-		mvi	a,32
-		sub	h		; строка
-		add	a		; x2
-		add	a		; x4
-		add	a		; x8
-		mov	l,a
-		mov	a,c
-		adi	BaseVramAdr/256	; vyssi byte adresy VRAM
-		mov	h,a		; HL=adresa VRAM
+		ld c,l		; столбец
+		ld a,32
+		sub h		; строка
+		add A,a		; x2
+		add A,a		; x4
+		add A,a		; x8
+		ld l,a
+		ld a,c
+		add A,BaseVramAdr/256	; vyssi byte adresy VRAM
+		ld h,a		; HL=adresa VRAM
 		ret
 
 ;------------------------------------------------------------------------------
@@ -151,28 +151,28 @@ Print8PosAdr:
 ; I: A=номер зоны
 ; O: -
 ; M: все
-PrintZoneNum:	mov	c,a		; cislo zony do C
-PrintZN:	mvi	b,10		; B=10 pre pocitanie desiatok
-		mvi	a,31		; zobrazuje sa ale "prevratena" hodnota
-		sub	c		; A=prevratena hodnota - 30 az 0
-		cmp	b		; je cislo vacsie ako 10?
-		jnc	PrintZoneNumA	; ano, skoc dalej
-		mov	c,b		; prazdne miesto namiesto desiatok do C
-		mov	b,a		; jednotky do B
-		jmp	PrintZoneNumC
+PrintZoneNum:	ld c,a; cislo zony do C
+PrintZN:	ld b,10; B=10 pre pocitanie desiatok
+		ld a,31		; zobrazuje sa ale "prevratena" hodnota
+		sub c		; A=prevratena hodnota - 30 az 0
+		cp b		; je cislo vacsie ako 10?
+		jp NC,PrintZoneNumA	; ano, skoc dalej
+		ld c,b		; prazdne miesto namiesto desiatok do C
+		ld b,a		; jednotky do B
+		jp PrintZoneNumC
 
-PrintZoneNumA:	mvi	c,0		; pocitadlo desiatok
-PrintZoneNumB:	inr	c		; +1
-		sub	b		; odpocitaj rad
-		cmp	b		; je zostatok vacsi ako 10?
-		jnc	PrintZoneNumB	; ano, skoc odpocitat dalsi rad
-		mov	b,a		; jednotky do B
-PrintZoneNumC:	push	b		; odpamataj jednotky
-		mvi	e,1		; cielovy znakovy stlpec
-		call	PrintDigit	; zobraz desiatky
-		pop	b		; obnov jednotky
-		mov	c,b
-		mvi	e,3		; cielovy znakovy stlpec
+PrintZoneNumA:	ld c,0; pocitadlo desiatok
+PrintZoneNumB:	inc c; +1
+		sub b		; odpocitaj rad
+		cp b		; je zostatok vacsi ako 10?
+		jp NC,PrintZoneNumB	; ano, skoc odpocitat dalsi rad
+		ld b,a		; jednotky do B
+PrintZoneNumC:	push bc; odpamataj jednotky
+		ld e,1		; cielovy znakovy stlpec
+		call PrintDigit	; zobraz desiatky
+		pop bc		; obnov jednotky
+		ld c,b
+		ld e,3		; cielovy znakovy stlpec
 					; zobraz jednotky
 
 ;------------------------------------------------------------------------------
@@ -180,189 +180,189 @@ PrintZoneNumC:	push	b		; odpamataj jednotky
 ; I: C=cislica, E=znakovy stlpec
 ; O: -
 ; M: все
-PrintDigit:	mov	a,c		; x1
-		add	a		; x2
-		add	c		; x3
-		add	a		; x6
-		mov	c,a		; BC=offset na spravnu cislicu
-		mvi	b,0
-		lxi	h,DigitChars	; adresa "predlohy" digitalnych cislic
-		dad	b		; HL=adresa predlohy digitalnej cislice
-		mvi	d,24		; cielovy znakovy riadok
-		mvi	c,3		; dig. cislica je na vysku 3 znakov
-PrintDigitA:	push	b
-		mov	a,m		; znak do E
-		inx	h
-		call	Print88
-		mov	a,m
-		inx	h
-		call	Print88
-		dcr	e		; nazad o dva znaky
-		dcr	e
-		inr	d		; dalsi znakovy riadok
-		pop	b
-		dcr	c		; dalsi riadok cislice
-		jnz	PrintDigitA
+PrintDigit:	ld a,c; x1
+		add A,a		; x2
+		add A,c		; x3
+		add A,a		; x6
+		ld c,a		; BC=offset na spravnu cislicu
+		ld b,0
+		ld hl,DigitChars	; adresa "predlohy" digitalnych cislic
+		add HL,bc		; HL=adresa predlohy digitalnej cislice
+		ld d,24		; cielovy znakovy riadok
+		ld c,3		; dig. cislica je na vysku 3 znakov
+PrintDigitA:	push bc
+		ld a,(HL)		; znak do E
+		inc hl
+		call Print88
+		ld a,(HL)
+		inc hl
+		call Print88
+		dec e		; nazad o dva znaky
+		dec e
+		inc d		; dalsi znakovy riadok
+		pop bc
+		dec c		; dalsi riadok cislice
+		jp NZ,PrintDigitA
 		ret
 
 ;------------------------------------------------------------------------------
-PrtHiScore:	lxi	d,HILO(26,24)	; AT 26,24
-		lxi	h,HiScore
-		jmp	PrintScore
+PrtHiScore:	ld de,(26<<8)|24; AT 26,24
+		ld hl,HiScore
+		jp PrintScore
 
-PrtScore:	lxi	d,HILO(24,24)	; AT 24,24
-		lxi	h,Score
+PrtScore:	ld de,(24<<8)|24; AT 24,24
+		ld hl,Score
 
 ; I: HL=adresa score cislic, D=строка, E=столбец
-PrintScore:	mov	a,m		; возьми номер
-		ora	a		; конец?
-		rm			; ano, navrat
-		adi	030h
-		call	Print85
-		inx	h
-		jmp	PrintScore
+PrintScore:	ld a,(HL); возьми номер
+		or a		; конец?
+		ret M			; ano, navrat
+		add A,030h
+		call Print85
+		inc hl
+		jp PrintScore
 
 ;------------------------------------------------------------------------------
 ; Отображение инфо текса мелким шрифтом 4x8.
-PrintSmallInfo:	lxi	h,TInfoSmall
+PrintSmallInfo:	ld hl,TInfoSmall
 
 ;------------------------------------------------------------------------------
 ; Изображение текста шрифтом 4x8.
 ; I: HL=адрес текста
 ; O: -
 ; M: все
-Print4Text:	mov	e,m		; столбец
-		inx	h
-		mov	d,m		; ряд
-		inx	h
-Print4TextN:	mov	a,m		; символ
-		inx	h
-		cpi	0FEh		; koniec vsetkych textov?
-		rz			; ano, navrat
-		jnc	Print4Text	; skoc, koniec jedneho textu
-		call	Print4		; zobraz jeden znak
-		jmp	Print4TextN
+Print4Text:	ld e,(HL); столбец
+		inc hl
+		ld d,(HL)		; ряд
+		inc hl
+Print4TextN:	ld a,(HL); символ
+		inc hl
+		cp 0FEh		; koniec vsetkych textov?
+		ret Z			; ano, navrat
+		jp NC,Print4Text	; skoc, koniec jedneho textu
+		call Print4		; zobraz jeden znak
+		jp Print4TextN
 
 ;------------------------------------------------------------------------------
 ; Подпрограмма для рисования символа шириной 4 точки.
 ; I: D=строка, E=колонка, A=символ
 ; O: E=E+1
 ; M: AF, BC, E
-Print4:		push	h		; odpamataj adresu textu
-		push	d		; сохраняем строку/колонку
-		ora	a		; kod znaku /2
-		rar
-		push	psw		; odpamataj flag praveho/laveho znaku
-		mov	l,a		; kod znaku do HL
-		mvi	h,0
-		mov	c,l		; x1 tiez do BC
-		mov	b,h
-		dad	h		; x2
-		dad	h		; x4
-		dad	b		; x5
-		lxi	d,Font4-((3Ch/2)*5) ; pripocitaj adresu fontu
-		dad	d
-		lxi	d,CharBuf	; presun spravny znak do buffra
-		mvi	b,5
-		pop	psw
-		jnc	Print4B
-Print4A:	mov	a,m
-		ani	0Fh
-		stax	d
-		inx	h
-		inx	d
-		dcr	b
-		jnz	Print4A
-		jmp	Print4C
-Print4B:	mov	a,m
-		rlc
-		rlc
-		rlc
-		rlc
-		ani	0Fh
-		stax	d
-		inx	h
-		inx	d
-		dcr	b
-		jnz	Print4B
+Print4:		push hl; odpamataj adresu textu
+		push de		; сохраняем строку/колонку
+		or a		; kod znaku /2
+		rra
+		push af		; odpamataj flag praveho/laveho znaku
+		ld l,a		; kod znaku do HL
+		ld h,0
+		ld c,l		; x1 tiez do BC
+		ld b,h
+		add HL,hl		; x2
+		add HL,hl		; x4
+		add HL,bc		; x5
+		ld de,Font4-((3Ch/2)*5) ; pripocitaj adresu fontu
+		add HL,de
+		ld de,CharBuf	; presun spravny znak do buffra
+		ld b,5
+		pop af
+		jp NC,Print4B
+Print4A:	ld a,(HL)
+		and 0Fh
+		ld (de),A
+		inc hl
+		inc de
+		dec b
+		jp NZ,Print4A
+		jp Print4C
+Print4B:	ld a,(HL)
+		rlca
+		rlca
+		rlca
+		rlca
+		and 0Fh
+		ld (de),A
+		inc hl
+		inc de
+		dec b
+		jp NZ,Print4B
 ; Теперь мы приготовили символ в CharBuf
-Print4C:	lxi	d,CharBuf	; DE=predloha znaku
-		pop	h		; берём строку/колонку в HL
-		push	h		; и возвращаем на стек
-		mvi	a,32
-		sub	h		; 31 - строка
-		rlc
-		rlc
-		rlc			; x8
-		dcr	a
-		mov	c,l		; колонка
-		mov	l,a		; младший байт видео-адреса
-		mov	a,c		; колонка
-		rar			; колонка / 2 = колонка на экране
-		push	psw		; запоминаем флаг C - признак нечётной позиции
-		adi	BaseVramAdr/256	; добавляем старший байт видео
-		mov	h,a		; старший байт видео-адреса
-		pop	psw
-		jc	Print4S0	; к печати символа в нечётной позиции
+Print4C:	ld de,CharBuf; DE=predloha znaku
+		pop hl		; берём строку/колонку в HL
+		push hl		; и возвращаем на стек
+		ld a,32
+		sub h		; 31 - строка
+		rlca
+		rlca
+		rlca			; x8
+		dec a
+		ld c,l		; колонка
+		ld l,a		; младший байт видео-адреса
+		ld a,c		; колонка
+		rra			; колонка / 2 = колонка на экране
+		push af		; запоминаем флаг C - признак нечётной позиции
+		add A,BaseVramAdr/256	; добавляем старший байт видео
+		ld h,a		; старший байт видео-адреса
+		pop af
+		jp C,Print4S0	; к печати символа в нечётной позиции
 ; Вывод символа в чётной позиции
 ; I: DE=adresa predlohy znaku, HL=адрес VRAM
-Print4S2:	mov	a,m		; 2x medzera nad znakom
-		ani	0Fh
-		mov	m,a
-		dcr	l		; следующая строка
-		mov	a,m
-		ani	0Fh
-		mov	m,a
-		dcr	l		; следующая строка
-		mvi	b,5		; vyska predlohy znaku
-Print4S2L:	mov	a,m		; берём байт знака
-		ani	0Fh
-		mov	m,a
-		ldax	d
-		inx	d
-		rrc
-		rrc
-		rrc
-		rrc
-		ora	m
-		mov	m,a
-		dcr	l		; следующая строка
-		dcr	b
-		jnz	Print4S2L
-		mov	a,m		; medzera pod znakom
-		ani	0Fh
-		mov	m,a
-		pop	d
-		pop	h
-		inr	e		; следующая позиция в строке
+Print4S2:	ld a,(HL); 2x medzera nad znakom
+		and 0Fh
+		ld (HL),a
+		dec l		; следующая строка
+		ld a,(HL)
+		and 0Fh
+		ld (HL),a
+		dec l		; следующая строка
+		ld b,5		; vyska predlohy znaku
+Print4S2L:	ld a,(HL); берём байт знака
+		and 0Fh
+		ld (HL),a
+		ld A,(de)
+		inc de
+		rrca
+		rrca
+		rrca
+		rrca
+		or (HL)
+		ld (HL),a
+		dec l		; следующая строка
+		dec b
+		jp NZ,Print4S2L
+		ld a,(HL)		; medzera pod znakom
+		and 0Fh
+		ld (HL),a
+		pop de
+		pop hl
+		inc e		; следующая позиция в строке
 		ret
 ; Вывод символа в нечётной позиции
 ; I: DE=adresa predlohy znaku, HL=adresa VRAM
-Print4S0:	mov	a,m		; 2x medzera nad znakom
-		ani	0F0h
-		mov	m,a
-		dcr	l		; следующая строка
-		mov	a,m
-		ani	0F0h
-		mov	m,a
-		dcr	l		; следующая строка
-		mvi	b,5		; vyska predlohy znaku
-Print4S0L:	mov	a,m		; берём байт знака
-		ani	0F0h
-		mov	m,a
-		ldax	d
-		inx	d
-		ora	m
-		mov	m,a
-		dcr	l		; следующая строка
-		dcr	b
-		jnz	Print4S0L
-		mov	a,m		; место под символом
-		ani	0F0h
-		mov	m,a
-		pop	d
-		pop	h
-		inr	e		; следующая позиция в строке
+Print4S0:	ld a,(HL); 2x medzera nad znakom
+		and 0F0h
+		ld (HL),a
+		dec l		; следующая строка
+		ld a,(HL)
+		and 0F0h
+		ld (HL),a
+		dec l		; следующая строка
+		ld b,5		; vyska predlohy znaku
+Print4S0L:	ld a,(HL); берём байт знака
+		and 0F0h
+		ld (HL),a
+		ld A,(de)
+		inc de
+		or (HL)
+		ld (HL),a
+		dec l		; следующая строка
+		dec b
+		jp NZ,Print4S0L
+		ld a,(HL)		; место под символом
+		and 0F0h
+		ld (HL),a
+		pop de
+		pop hl
+		inc e		; следующая позиция в строке
 		ret
 
 ;------------------------------------------------------------------------------

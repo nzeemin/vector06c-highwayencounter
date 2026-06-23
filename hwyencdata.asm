@@ -26,7 +26,7 @@
 
 CodeGapBegin	.equ	$
 
-		.org  (($ + 0FFH) & 0FF00H)	; align 256
+		ALIGN 256
 
 CodeGapEnd	.equ	$
 
@@ -39,47 +39,49 @@ CodeGapEnd	.equ	$
 ;      3 |       1 | inkrement typu rutiny
 ;      4 |       2 | inkrement adresy spritu vo VO2 v ramci znakovej pozicie
 ;      6 |       2 | inkrement adresy spritu vo VO2 pri opusteni zn. pozicie
-#define		MovSpr(incY,incX,incR,incA,incAX) .db incY
-#defcont					\ .dw incX
-#defcont					\ .db incR
-#defcont					\ .dw incA
-#defcont					\ .dw incAX
+	MACRO MovSpr incY,incX,incR,incA,incAX
+		db incY
+		dw incX
+		db incR
+		dw incA
+		dw incAX
+	ENDM
 MovTable:	; rychlost 1
-		MovSpr(	 0, 2, 1,      -SVO,  -(SVO-1)	) ; posun na Vychod
-		MovSpr(	-1, 1, 1,         0,         1	) ; posun na Juho-Vychod
-		MovSpr(	-2, 0, 1,       SVO,     SVO+1	) ; posun Juh
-		MovSpr(	-1,-1, 0,       SVO,       SVO	) ; posun Juho-Zapad
-		MovSpr(	 0,-2,-1,       SVO,     SVO-1	) ; posun na Zapad
-		MovSpr(	 1,-1,-1,         0,        -1	) ; posun na Severo-Zapad
-		MovSpr(	 2, 0,-1,      -SVO,  -(SVO+1)	) ; posun na Sever
-		MovSpr(	 1, 1, 0,      -SVO,      -SVO	) ; posun na Severo-Vychod
+		MovSpr	 0, 2, 1,      -SVO,  -(SVO-1)	 ; posun na Vychod
+		MovSpr	-1, 1, 1,         0,         1	 ; posun na Juho-Vychod
+		MovSpr	-2, 0, 1,       SVO,     SVO+1	 ; posun Juh
+		MovSpr	-1,-1, 0,       SVO,       SVO	 ; posun Juho-Zapad
+		MovSpr	 0,-2,-1,       SVO,     SVO-1	 ; posun na Zapad
+		MovSpr	 1,-1,-1,         0,        -1	 ; posun na Severo-Zapad
+		MovSpr	 2, 0,-1,      -SVO,  -(SVO+1)	 ; posun na Sever
+		MovSpr	 1, 1, 0,      -SVO,      -SVO	 ; posun na Severo-Vychod
 		; rychlost 2
-		MovSpr(	 0, 4, 2,       -64,       -63	) ; posun na Vychod
-		MovSpr(	-2, 2, 2,         0,         1	) ; posun na Juho-Vychod
-		MovSpr(	-4, 0, 2,     2*SVO,   2*SVO+1	) ; posun Juh
-		MovSpr(	-2,-2, 0,     2*SVO,     2*SVO	) ; posun Juho-Zapad
-		MovSpr(	 0,-4,-2,     2*SVO,   2*SVO-1	) ; posun na Zapad
-		MovSpr(	 2,-2,-2,         0,        -1	) ; posun na Severo-Zapad
-		MovSpr(	 4, 0,-2,       -64,       -65	) ; posun na Sever
-		MovSpr(	 2, 2, 0,       -64,       -64	) ; posun na Severo-Vychod
+		MovSpr	 0, 4, 2,       -64,       -63	 ; posun na Vychod
+		MovSpr	-2, 2, 2,         0,         1	 ; posun na Juho-Vychod
+		MovSpr	-4, 0, 2,     2*SVO,   2*SVO+1	 ; posun Juh
+		MovSpr	-2,-2, 0,     2*SVO,     2*SVO	 ; posun Juho-Zapad
+		MovSpr	 0,-4,-2,     2*SVO,   2*SVO-1	 ; posun na Zapad
+		MovSpr	 2,-2,-2,         0,        -1	 ; posun na Severo-Zapad
+		MovSpr	 4, 0,-2,       -64,       -65	 ; posun na Sever
+		MovSpr	 2, 2, 0,       -64,       -64	 ; posun na Severo-Vychod
 		; rychlost 3
-		MovSpr(	 0, 6, 0,       -95,       -95	) ; posun na Vychod
-		MovSpr(	-3, 3, 0,         1,         1	) ; posun na Juho-Vychod
-		MovSpr(	-6, 0, 0,   3*SVO+1,   3*SVO+1	) ; posun Juh
-		MovSpr(	-3,-3, 0,     3*SVO,     3*SVO	) ; posun Juho-Zapad
-		MovSpr(	 0,-6, 0,   3*SVO-1,   3*SVO-1	) ; posun na Zapad
-		MovSpr(	 3,-3, 0,        -1,        -1	) ; posun na Severo-Zapad
-		MovSpr(	 6, 0, 0,       -97,       -97	) ; posun na Sever
-		MovSpr(	 3, 3, 0,       -96,       -96	) ; posun na Severo-Vychod
+		MovSpr	 0, 6, 0,       -95,       -95	 ; posun na Vychod
+		MovSpr	-3, 3, 0,         1,         1	 ; posun na Juho-Vychod
+		MovSpr	-6, 0, 0,   3*SVO+1,   3*SVO+1	 ; posun Juh
+		MovSpr	-3,-3, 0,     3*SVO,     3*SVO	 ; posun Juho-Zapad
+		MovSpr	 0,-6, 0,   3*SVO-1,   3*SVO-1	 ; posun na Zapad
+		MovSpr	 3,-3, 0,        -1,        -1	 ; posun na Severo-Zapad
+		MovSpr	 6, 0, 0,       -97,       -97	 ; posun na Sever
+		MovSpr	 3, 3, 0,       -96,       -96	 ; posun na Severo-Vychod
 		; rychlost 4
-		MovSpr(	 0, 8, 1,      -127,      -126	) ; posun na Vychod
-		MovSpr(	-4, 4, 1,         1,         2	) ; posun na Juho-Vychod
-		MovSpr(	-8, 0, 1,   4*SVO+1,   4*SVO+2	) ; posun Juh
-		MovSpr(	-4,-4, 0,     4*SVO,     4*SVO	) ; posun Juho-Zapad
-		MovSpr(	 0,-8,-1,   4*SVO-1,   4*SVO-2	) ; posun na Zapad
-		MovSpr(	 4,-4,-1,        -1,        -2	) ; posun na Severo-Zapad
-		MovSpr(	 8, 0,-1,      -129,      -130	) ; posun na Sever
-		MovSpr(	 4, 4, 0,      -128,      -128	) ; posun na Severo-Vychod
+		MovSpr	 0, 8, 1,      -127,      -126	 ; posun na Vychod
+		MovSpr	-4, 4, 1,         1,         2	 ; posun na Juho-Vychod
+		MovSpr	-8, 0, 1,   4*SVO+1,   4*SVO+2	 ; posun Juh
+		MovSpr	-4,-4, 0,     4*SVO,     4*SVO	 ; posun Juho-Zapad
+		MovSpr	 0,-8,-1,   4*SVO-1,   4*SVO-2	 ; posun na Zapad
+		MovSpr	 4,-4,-1,        -1,        -2	 ; posun na Severo-Zapad
+		MovSpr	 8, 0,-1,      -129,      -130	 ; posun na Sever
+		MovSpr	 4, 4, 0,      -128,      -128	 ; posun na Severo-Vychod
 
 ;------------------------------------------------------------------------------
 ; Pracovne premenne
@@ -151,9 +153,7 @@ BackupVars:	.db	1
 
 BVarsLen	.equ	$-BackupVars
 
-	#if VarsLen != BVarsLen
-	  #error "Разная длина поля основных и резервных переменных!!!"
-	#endif
+	ASSERT VarsLen == BVarsLen	; "Разная длина поля основных и резервных переменных!!!"
 
 ;------------------------------------------------------------------------------
 ; inicializacne data spritov
@@ -217,7 +217,7 @@ VanishData:	.db	20h		; 0
 ; rozne premenne
 CtrlType:	.db	0		; sposob ovladania - 00h=Kbd, 0FFh=Joy
 SpeedLevel:	.db	0		; uroven rychlosti pohybu spritov
-PattHeight:	.db	0		
+PattHeight:	.db	0
 ZoneDataPtr:	.dw	0
 PattSeqPtr:	.dw	0
 IncSeq0F:	.db	2		; inkrement pre premennu Seq0F
@@ -237,13 +237,13 @@ RoughAdrs:	.ds	12*2+1		; adresy VO2 vykreslenych drsnych povrchov
 
 VarSpaceEnd	.equ	$
 
-		.org  (($ + 0FFH) & 0FF00H)	; align 256
+		ALIGN 256
 
 VarSpaceMax	.equ	$
 
 ;------------------------------------------------------------------------------
 ; Tabulka obsluznych rutin spracovania kolizie spritov.
-; 
+;
 ; (IX+11)=offset=00h,16h,2Ch,42h,58h,6Eh,84h,9Ah,0B0h,0C6h,0DCh
 ; N=2*<0, 11>
 RtnList:	.dw	VortHit,ShotFlyOffV,VortBlast,VortBlast		; 00h - Vorton, 10h - Auto-Vorton
@@ -282,11 +282,11 @@ RtnList:	.dw	VortHit,ShotFlyOffV,VortBlast,VortBlast		; 00h - Vorton, 10h - Auto
 
 ;------------------------------------------------------------------------------
 
-		.org  (($ + 0FFH) & 0FF00H)	; align 256
+		ALIGN 256
 
 ;------------------------------------------------------------------------------
 ; tabulka adries spritov - sekvencie spritov					; (ix+5) (ix+6)
-SprAddrs:	.dw	SprVortonE,SprVortonSE,SprVortonS,SprVortonSW		; 00h	 00h	  
+SprAddrs:	.dw	SprVortonE,SprVortonSE,SprVortonS,SprVortonSW		; 00h	 00h
 		.dw	SprVortonW,SprVortonNW,SprVortonN,SprVortonNE
 		.dw	SprLasertron1,SprLasertron2,SprLasertron3,SprLasertron4	; 10h	 09h
 		.dw	SprShot1,SprShot2,SprShot1,SprShot2			; 18h	 01h
@@ -996,7 +996,7 @@ Font85:		;binclude "../data/font85.bin"
 	.db	$41,$7D,$7D,$7D,$7D	; 007 7
 	.db	$41,$5D,$41,$5D,$41	; 010 8
 	.db	$41,$5D,$41,$7D,$41	; 011 9
-	.db	$7F,$7F,$7F,$7F,$7F	; 012  
+	.db	$7F,$7F,$7F,$7F,$7F	; 012
 	.db	$7F,$6F,$7F,$6F,$7F	; 013 :
 	.db	$7D,$7B,$77,$6F,$5F	; 014 /
 	.db	$7F,$7F,$77,$7F,$7F	; 015 .
@@ -1033,15 +1033,15 @@ Font85:		;binclude "../data/font85.bin"
 ; Font 4x5 - v jednej predlohe su dva znaky siroke 4 body. - 32 znakov
 ; Znaky: < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z .
 Font4:		;binclude "../data/font4.bin"
-	.db	$08,$04,$3E,$04,$08,$08,$08,$3E	
-	.db	$08,$08,$02,$05,$05,$07,$05,$62	
-	.db	$55,$64,$55,$62,$67,$54,$56,$54	
-	.db	$67,$72,$45,$64,$45,$43,$52,$52	
-	.db	$72,$52,$52,$25,$25,$26,$A5,$45	
-	.db	$45,$47,$45,$45,$75,$62,$55,$55	
-	.db	$55,$52,$62,$55,$65,$45,$43,$63	
-	.db	$54,$62,$51,$56,$75,$25,$25,$25	
-	.db	$23,$55,$55,$55,$57,$25,$55,$55	
+	.db	$08,$04,$3E,$04,$08,$08,$08,$3E
+	.db	$08,$08,$02,$05,$05,$07,$05,$62
+	.db	$55,$64,$55,$62,$67,$54,$56,$54
+	.db	$67,$72,$45,$64,$45,$43,$52,$52
+	.db	$72,$52,$52,$25,$25,$26,$A5,$45
+	.db	$45,$47,$45,$45,$75,$62,$55,$55
+	.db	$55,$52,$62,$55,$65,$45,$43,$63
+	.db	$54,$62,$51,$56,$75,$25,$25,$25
+	.db	$23,$55,$55,$55,$57,$25,$55,$55
 	.db	$22,$52,$52,$70,$10,$22,$40,$70
 
 ; Font 8x8 - font je bitovo otoceny
@@ -1394,7 +1394,7 @@ LtronAct:	;binclude "../data/ltron-activated.bin"
 ; 57x192 = 10944 bytov celkom
 ; organizacia spritu - 4 byty masky, 4 byty predlohy atd.
 Sprites:	;binclude "../data/sprites.bin"
-SprBrickM:	
+SprBrickM:
 	.db	$FF,$C3,$FF,$00,$18,$00, $FF,$00,$FF,$00,$46,$00 ; 0
 	.db	$FC,$00,$3F,$01,$19,$80, $F0,$00,$0F,$04,$46,$60
 	.db	$F0,$00,$1F,$01,$19,$80, $F0,$00,$0F,$04,$46,$60
